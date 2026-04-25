@@ -1,66 +1,69 @@
 # Deti Control
 
-Family chore tracking web app for children and parents.
+Семейное веб-приложение для домашних заданий, баллов и родительской модерации.
 
-Deti Control helps a family manage household tasks, points, approvals, and child-specific access from one phone-friendly web interface.
+`Deti Control` помогает вести домашние дела для детей в удобном формате: у каждого ребенка свой кабинет, у родителя отдельная панель проверки, а доступ защищен PIN-кодами.
 
-## Current status
+## Что уже есть
 
-MVP is already running and includes:
+Текущая MVP-версия включает:
 
-- landing page with child profile selection
-- child cabinet pages
-- parent dashboard
-- Prisma + SQLite data layer
-- seeded demo data for 3 children
-- parent PIN access
-- individual PIN access for each child
+- главную страницу с выбором профиля
+- отдельные кабинеты детей
+- родительскую панель
+- PIN-код для родителя
+- отдельный PIN-код для каждого ребенка
+- Prisma + SQLite
+- тестовые данные для `Stefan`, `Alwina`, `Lukas`
 
-Planned next:
+## Что планируется дальше
 
-- photo upload from child device
-- parent approve / reject flow
-- automatic photo deletion after decision
-- manual bonus / penalty actions
+Следующий большой этап:
 
-## Tech stack
+- загрузка фото с телефона ребенком
+- заявка на проверку
+- одобрение или отклонение родителем
+- удаление фото после решения
+- ручные бонусы и штрафы
+
+## Технологии
 
 - Next.js
 - TypeScript
 - Tailwind CSS
 - Prisma
 - SQLite
-- PM2 for production runtime
+- PM2 для продакшн-запуска
 
-## Local development
+## Локальный запуск
 
-Project path:
+Путь проекта:
 
 ```text
 C:\Users\Sergej\Documents\Codex\Deti Control
 ```
 
-Install dependencies:
+Установка зависимостей:
 
 ```bash
 npm install
 ```
 
-Run development server:
+Запуск в режиме разработки:
 
 ```bash
 npm run dev
 ```
 
-Open:
+Открыть в браузере:
 
 ```text
 http://localhost:3000
 ```
 
-## Environment
+## Переменные окружения
 
-Example values:
+Пример `.env`:
 
 ```env
 DATABASE_URL="file:./dev.db"
@@ -70,49 +73,49 @@ CHILD_PIN_ALWINA="2222"
 CHILD_PIN_LUKAS="3333"
 ```
 
-## Database
+## База данных
 
-Generate Prisma client:
+Сгенерировать Prisma client:
 
 ```bash
 npx prisma generate
 ```
 
-Sync schema:
+Синхронизировать схему:
 
 ```bash
 npx prisma db push --skip-generate
 ```
 
-Seed demo data:
+Заполнить демо-данными:
 
 ```bash
 npm run db:seed
 ```
 
-## Production
+## Продакшн
 
-Current deployed server:
+Текущий сервер:
 
 ```text
 http://192.168.1.250:3000
 ```
 
-Runtime:
+Менеджер процессов:
 
 ```text
 pm2
 ```
 
-Process name:
+Имя процесса:
 
 ```text
 deti-control
 ```
 
-## Important files
+## Важные файлы
 
-Routes:
+Основные роуты:
 
 ```text
 src/app/page.tsx
@@ -122,21 +125,21 @@ src/app/parent/page.tsx
 src/app/parent/unlock/page.tsx
 ```
 
-Auth and sessions:
+Авторизация и PIN:
 
 ```text
 src/lib/auth.ts
 src/app/actions/auth.ts
 ```
 
-Project handover:
+Передача проекта:
 
 ```text
 HANDOVER.md
 ```
 
-## Notes
+## Заметки
 
-- This project started from a real paper-based family points system.
-- The app is intended for phone use inside the home first.
-- Before major work, read `HANDOVER.md`.
+- Проект вырос из реальной бумажной системы домашних дел и баллов.
+- Интерфейс в первую очередь рассчитан на использование с телефона.
+- Перед крупной доработкой лучше открыть `HANDOVER.md`.

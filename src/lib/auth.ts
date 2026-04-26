@@ -1,42 +1,38 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-
-const PARENT_COOKIE = "deti-parent-session";
-const CHILD_COOKIE = "deti-child-session";
+import {
+  authCookieNames,
+  createChildSessionValue,
+  createParentSessionValue,
+  getChildPin,
+  getParentPin,
+  isValidChildSessionValue,
+  isValidParentSessionValue,
+  SESSION_MAX_AGE_SECONDS,
+  validatePin,
+} from "@/lib/auth-core";
 
 const SESSION_OPTIONS = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
+  secure: process.env.SESSION_SECURE_COOKIE === "true",
   path: "/",
-  maxAge: 60 * 60 * 24 * 30,
+  maxAge: SESSION_MAX_AGE_SECONDS,
 };
-
-function childPinEnvKey(slug: string) {
-  return `CHILD_PIN_${slug.replace(/[^a-zA-Z0-9]/g, "_").toUpperCase()}`;
-}
-
-export function getParentPin() {
-  return process.env.PARENT_PIN?.trim() ?? "1234";
-}
-
-export function getChildPin(slug: string) {
-  return process.env[childPinEnvKey(slug)]?.trim() ?? "1111";
-}
 
 export async function createParentSession() {
   const store = await cookies();
-  store.set(PARENT_COOKIE, "ok", SESSION_OPTIONS);
+  store.set(authCookieNames.parent, createParentSessionValue(), SESSION_OPTIONS);
 }
 
 export async function clearParentSession() {
   const store = await cookies();
-  store.delete(PARENT_COOKIE);
+  store.delete(authCookieNames.parent);
 }
 
 export async function hasParentSession() {
   const store = await cookies();
-  return store.get(PARENT_COOKIE)?.value === "ok";
+  return isValidParentSessionValue(store.get(authCookieNames.parent)?.value);
 }
 
 export async function requireParentSession() {
@@ -47,17 +43,17 @@ export async function requireParentSession() {
 
 export async function createChildSession(slug: string) {
   const store = await cookies();
-  store.set(CHILD_COOKIE, slug, SESSION_OPTIONS);
+  store.set(authCookieNames.child, createChildSessionValue(slug), SESSION_OPTIONS);
 }
 
 export async function clearChildSession() {
   const store = await cookies();
-  store.delete(CHILD_COOKIE);
+  store.delete(authCookieNames.child);
 }
 
 export async function hasChildSession(slug: string) {
   const store = await cookies();
-  return store.get(CHILD_COOKIE)?.value === slug;
+  return isValidChildSessionValue(store.get(authCookieNames.child)?.value, slug);
 }
 
 export async function requireChildSession(slug: string) {
@@ -65,3 +61,5 @@ export async function requireChildSession(slug: string) {
     redirect(`/child/${slug}/unlock`);
   }
 }
+
+export { getChildPin, getParentPin, validatePin };

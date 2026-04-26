@@ -1,8 +1,10 @@
 import { PrismaClient, SubmissionStatus, TransactionType } from "@prisma/client";
+import { dishwasherRotation, householdSettingKeys } from "../src/lib/household";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.setting.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.submission.deleteMany();
   await prisma.task.deleteMany();
@@ -35,71 +37,55 @@ async function main() {
   const tasks = await prisma.$transaction([
     prisma.task.create({
       data: {
-        title: "Развесить одежду после стирки",
-        category: "Стирка",
-        points: 20,
-      },
-    }),
-    prisma.task.create({
-      data: {
-        title: "Запуск стирки",
-        category: "Стирка",
-        points: 20,
-      },
-    }),
-    prisma.task.create({
-      data: {
-        title: "Снять одежду после стирки",
-        category: "Стирка",
-        points: 20,
-      },
-    }),
-    prisma.task.create({
-      data: {
-        title: "Убрать стол в кухне или гостиной",
-        category: "Кухня",
-        points: 10,
-      },
-    }),
-    prisma.task.create({
-      data: {
-        title: "Убрать шкаф",
-        category: "Порядок",
-        points: 30,
-      },
-    }),
-    prisma.task.create({
-      data: {
         title: "Уборка в комнате",
-        category: "Комната",
+        category: "Неделя",
         points: 50,
+        description: "Проверка по пятницам вечером. Родитель вручную принимает результат или ставит штраф.",
       },
     }),
     prisma.task.create({
       data: {
-        title: "Вынос мусора или бумаги",
+        title: "Вынос черного мешка",
         category: "Дом",
         points: 20,
+        description: "Основной ответственный Lukas, но выполнить может любой ребенок.",
       },
     }),
     prisma.task.create({
       data: {
-        title: "Загрузка посудомойки",
-        category: "Кухня",
+        title: "Вынос бумаги",
+        category: "Дом",
         points: 20,
+        description: "Основной ответственный Stefan, но задача остается открытой для всех.",
+      },
+    }),
+    prisma.task.create({
+      data: {
+        title: "Посудомойка недели",
+        category: "Неделя",
+        points: 20,
+        description: "Недельное дежурство по очереди Stefan → Alwina → Lukas.",
+      },
+    }),
+    prisma.task.create({
+      data: {
+        title: "Столы в гостиной и кухне",
+        category: "Будни",
+        points: 10,
+        description: "Проверка каждый будний день к возвращению родителя с работы.",
       },
     }),
   ]);
 
   const [stefan, alwina, lukas] = children;
-  const [laundryHang, laundryStart, laundryRemove, tableTask, wardrobeTask, roomTask, trashTask] = tasks;
+  const [roomTask, blackBagTask, paperTask, dishwasherTask, tablesTask] = tasks;
 
   const pendingSubmission = await prisma.submission.create({
     data: {
       childId: lukas.id,
-      taskId: trashTask.id,
-      photoPath: "/uploads/pending/lukas-trash-photo.jpg",
-      note: "Сделал фото сразу после выноса пакета.",
+      taskId: blackBagTask.id,
+      photoPath: "/uploads/pending/lukas-black-bag.jpg",
+      note: "Черный мешок вынесен, ждет подтверждения по фото.",
       status: SubmissionStatus.PENDING,
     },
   });
@@ -119,63 +105,81 @@ async function main() {
     data: [
       {
         childId: stefan.id,
-        title: laundryHang.title,
-        points: 20,
+        title: tablesTask.title,
+        note: "Порядок на столах к возвращению родителя.",
+        points: 10,
         type: TransactionType.REWARD,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
       },
       {
         childId: stefan.id,
-        title: "Ручной штраф",
-        note: "Не убрал стол после ужина.",
-        points: -30,
-        type: TransactionType.MANUAL_PENALTY,
+        title: paperTask.title,
+        points: 20,
+        type: TransactionType.REWARD,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 7),
       },
       {
         childId: alwina.id,
         submissionId: approvedSubmission.id,
         title: roomTask.title,
+        note: "Недельная проверка комнаты принята.",
         points: 50,
         type: TransactionType.REWARD,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 25),
       },
       {
         childId: alwina.id,
-        title: wardrobeTask.title,
-        points: 30,
-        type: TransactionType.REWARD,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
-      },
-      {
-        childId: lukas.id,
-        title: laundryStart.title,
-        points: 20,
-        type: TransactionType.REWARD,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 9),
-      },
-      {
-        childId: lukas.id,
-        title: tableTask.title,
+        title: tablesTask.title,
+        note: "Порядок на столах к возвращению родителя.",
         points: 10,
         type: TransactionType.REWARD,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
+      },
+      {
+        childId: lukas.id,
+        title: tablesTask.title,
+        note: "Порядок на столах к возвращению родителя.",
+        points: 10,
+        type: TransactionType.REWARD,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
       },
       {
         childId: lukas.id,
         submissionId: pendingSubmission.id,
-        title: trashTask.title,
+        title: blackBagTask.title,
         note: "Ждет подтверждения по фото.",
         points: 0,
         type: TransactionType.REJECTION,
-        createdAt: new Date(Date.now() - 1000 * 60 * 8),
+        createdAt: new Date(Date.now() - 1000 * 60 * 45),
       },
       {
-        childId: stefan.id,
-        title: laundryRemove.title,
+        childId: lukas.id,
+        title: dishwasherTask.title,
+        note: "Дежурство по посудомойке на прошлой неделе было принято.",
         points: 20,
         type: TransactionType.REWARD,
-        createdAt: new Date(Date.now() - 1000 * 60 * 2),
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
+      },
+    ],
+  });
+
+  await prisma.setting.createMany({
+    data: [
+      {
+        key: householdSettingKeys.dishwasherCurrentSlug,
+        value: dishwasherRotation[0],
+      },
+      {
+        key: householdSettingKeys.roomLastReviewed(stefan.slug),
+        value: "2000-01-07",
+      },
+      {
+        key: householdSettingKeys.roomLastReviewed(alwina.slug),
+        value: "2000-01-07",
+      },
+      {
+        key: householdSettingKeys.roomLastReviewed(lukas.slug),
+        value: "2000-01-07",
       },
     ],
   });

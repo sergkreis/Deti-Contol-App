@@ -17,12 +17,12 @@ export default function ParentUnlockPage() {
       <main className="mx-auto grid w-full max-w-xl gap-6">
         <SectionCard
           title="Только для родителя"
-          description="После входа будут доступны все дети, история, очередь проверки и настройки."
+          description="После входа будут доступны ручные действия, недельная проверка, история и очередь на будущее."
         >
           <PinForm
             action={unlockParentAction}
             title="PIN родителя"
-            description="Введите PIN, чтобы открыть панель одобрения и общий обзор по семье."
+            description="Введите PIN, чтобы открыть домашний пульт управления."
             submitLabel="Открыть панель"
           />
         </SectionCard>

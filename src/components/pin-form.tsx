@@ -43,7 +43,7 @@ export function PinForm({
           type="password"
           inputMode="numeric"
           pattern="[0-9]*"
-          autoComplete="one-time-code"
+          autoComplete="off"
           className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-lg tracking-[0.35em] text-slate-950 outline-none ring-0 placeholder:text-slate-300 focus:border-slate-400"
           placeholder="••••"
           required

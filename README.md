@@ -67,10 +67,12 @@ http://localhost:3000
 
 ```env
 DATABASE_URL="file:./dev.db"
-PARENT_PIN="1234"
-CHILD_PIN_STEFAN="1111"
-CHILD_PIN_ALWINA="2222"
-CHILD_PIN_LUKAS="3333"
+SESSION_SECRET="<long-random-secret>"
+SESSION_SECURE_COOKIE="false"
+PARENT_PIN="<parent-pin>"
+CHILD_PIN_STEFAN="<child-pin>"
+CHILD_PIN_ALWINA="<child-pin>"
+CHILD_PIN_LUKAS="<child-pin>"
 ```
 
 ## База данных

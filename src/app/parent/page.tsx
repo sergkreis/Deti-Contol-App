@@ -1,4 +1,10 @@
-import { CheckCircle2, Clock3, ListChecks, Shield, XCircle } from "lucide-react";
+import { Clock3, ShieldCheck, Users } from "lucide-react";
+import {
+  applyQuickCollectiveRuleAction,
+  createManualTransactionAction,
+  reviewDishwasherAction,
+  reviewRoomAction,
+} from "@/app/actions/transactions";
 import { logoutParentAction } from "@/app/actions/auth";
 import { Badge } from "@/components/badge";
 import { EmptyState } from "@/components/empty-state";
@@ -6,132 +12,296 @@ import { Header } from "@/components/header";
 import { LogoutButton } from "@/components/logout-button";
 import { SectionCard } from "@/components/section-card";
 import { Shell } from "@/components/shell";
+import { TransactionForm } from "@/components/transaction-form";
 import { requireParentSession } from "@/lib/auth";
 import { formatDate, formatPoints } from "@/lib/format";
 import { getParentPageData } from "@/lib/data";
 
+const actionButtonClass =
+  "inline-flex items-center justify-center rounded-full px-4 py-3 text-sm font-semibold transition";
+
 export default async function ParentPage() {
   await requireParentSession();
-  const { summary, pendingSubmissions, tasks, transactions } = await getParentPageData();
+  const {
+    children,
+    summary,
+    pendingSubmissions,
+    tasks,
+    transactions,
+    collectiveRules,
+    responsibilityNotes,
+    weeklyReview,
+  } = await getParentPageData();
+
+  const tablesRule = collectiveRules[0];
 
   return (
     <Shell>
       <Header
         eyebrow="Родительский режим"
-        title="Очередь фотоотчетов и общий контроль по всем детям."
-        description="Это рабочая панель родителя: кто сколько набрал, какие задания активны и какие заявки ждут решения."
+        title="Быстрый домашний пульт"
+        description="Первая домашняя версия под планшет: быстрые повседневные действия, недельная проверка и короткая история по семье."
         showBack
         actions={<LogoutButton action={logoutParentAction} label="Выйти" />}
       />
 
-      <main className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <main className="grid gap-6 xl:grid-cols-[1.15fr_0.95fr]">
         <div className="grid gap-6">
           <SectionCard
-            title="Ждут проверки"
-            description="После одобрения или отклонения фото в финальной логике будет удаляться."
-            actions={
-              <Badge tone={pendingSubmissions.length ? "warning" : "success"}>
-                {pendingSubmissions.length} в очереди
-              </Badge>
-            }
+            title="Общий счет"
+            description="Сводка по всем детям на текущий момент."
           >
-            <div className="space-y-4">
-              {pendingSubmissions.length ? (
-                pendingSubmissions.map((submission) => (
-                  <div
-                    key={submission.id}
-                    className="rounded-[28px] border border-slate-100 bg-slate-50/80 p-5"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-lg font-semibold text-slate-900">{submission.task.title}</p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {submission.child.name} • {formatDate(submission.submittedAt)}
-                        </p>
-                      </div>
-                      <Badge tone="warning">На проверке</Badge>
-                    </div>
-                    <div className="mt-4 rounded-3xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center">
-                      <p className="text-sm font-medium text-slate-600">Здесь будет фотоотчет</p>
-                      <p className="mt-2 text-xs text-slate-400">{submission.photoPath}</p>
-                    </div>
-                    {submission.note ? (
-                      <p className="mt-4 text-sm leading-6 text-slate-500">{submission.note}</p>
-                    ) : null}
-                    <div className="mt-5 flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-500"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                        Скоро: одобрить
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-3 text-sm font-semibold text-white hover:bg-rose-500"
-                      >
-                        <XCircle className="h-4 w-4" />
-                        Скоро: отклонить
-                      </button>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {summary.map((child) => (
+                <div key={child.id} className="rounded-2xl border border-slate-100 px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl" style={{ backgroundColor: child.color }} />
+                    <div>
+                      <p className="font-semibold text-slate-900">{child.name}</p>
+                      <p className="text-sm text-slate-500">Текущий счет</p>
                     </div>
                   </div>
-                ))
-              ) : (
-                <EmptyState
-                  title="Очередь пустая"
-                  description="Когда дети отправят фотоотчеты, они появятся здесь на проверке."
-                />
-              )}
+                  <p className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
+                    {formatPoints(child.balance)}
+                  </p>
+                </div>
+              ))}
             </div>
           </SectionCard>
 
-          <SectionCard title="Последние события" description="История начислений, штрафов и решений.">
-            <div className="space-y-3">
-              {transactions.map((transaction) => (
-                <div key={transaction.id} className="rounded-2xl border border-slate-100 px-4 py-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-slate-900">{transaction.child.name}</p>
-                      <p className="mt-1 text-sm text-slate-500">{transaction.title}</p>
-                    </div>
-                    <div className="text-right">
-                      <p
-                        className={`text-base font-semibold ${
-                          transaction.points >= 0 ? "text-emerald-600" : "text-rose-600"
-                        }`}
-                      >
-                        {formatPoints(transaction.points)}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">{formatDate(transaction.createdAt)}</p>
-                    </div>
-                  </div>
-                  {transaction.note ? (
-                    <p className="mt-3 text-sm leading-6 text-slate-500">{transaction.note}</p>
-                  ) : null}
+          <SectionCard
+            title="Быстрые действия на сегодня"
+            description="Самое частое домашнее использование: общие правила и ручные начисления с комментарием."
+          >
+            <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+              <div className="rounded-[26px] bg-amber-50 p-5">
+                <div className="flex items-center gap-2 text-amber-700">
+                  <Users className="h-5 w-5" />
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em]">Общее правило</p>
                 </div>
-              ))}
+                <p className="mt-4 text-xl font-semibold text-slate-950">{tablesRule.title}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{tablesRule.description}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Badge tone="success">{formatPoints(tablesRule.rewardPoints)} всем</Badge>
+                  <Badge tone="danger">{formatPoints(tablesRule.penaltyPoints)} всем</Badge>
+                </div>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <form
+                    action={applyQuickCollectiveRuleAction.bind(
+                      null,
+                      "/parent",
+                      tablesRule.title,
+                      tablesRule.rewardPoints,
+                      "Порядок на столах к возвращению родителя.",
+                    )}
+                  >
+                    <button
+                      type="submit"
+                      className={`${actionButtonClass} w-full bg-emerald-600 text-white hover:bg-emerald-500`}
+                    >
+                      Всем {formatPoints(tablesRule.rewardPoints)}
+                    </button>
+                  </form>
+
+                  <form
+                    action={applyQuickCollectiveRuleAction.bind(
+                      null,
+                      "/parent",
+                      tablesRule.title,
+                      tablesRule.penaltyPoints,
+                      "На столах остался беспорядок к возвращению родителя.",
+                    )}
+                  >
+                    <button
+                      type="submit"
+                      className={`${actionButtonClass} w-full bg-rose-600 text-white hover:bg-rose-500`}
+                    >
+                      Всем {formatPoints(tablesRule.penaltyPoints)}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <TransactionForm
+                action={createManualTransactionAction}
+                title="Ручное действие"
+                description="Когда вы дома и видите результат, можно сразу внести плюс или штраф без фото."
+                submitLabel="Сохранить действие"
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-slate-700">Ребенок</span>
+                    <select
+                      name="childId"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-slate-400"
+                      required
+                      defaultValue=""
+                    >
+                      <option value="" disabled>
+                        Выберите ребенка
+                      </option>
+                      {children.map((child) => (
+                        <option key={child.id} value={child.id}>
+                          {child.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-slate-700">Баллы</span>
+                    <input
+                      name="points"
+                      type="number"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-slate-400"
+                      placeholder="например, 20 или -30"
+                      required
+                    />
+                  </label>
+                </div>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">Комментарий</span>
+                  <input
+                    name="note"
+                    type="text"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-slate-400"
+                    placeholder="Необязательно, но удобно для истории"
+                  />
+                </label>
+              </TransactionForm>
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Проверка недели"
+            description="Отдельный ритуал для пятничных комнат и недельного дежурства по посудомойке."
+          >
+            <div className="grid gap-6">
+              <div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-sky-700">
+                    <Clock3 className="h-5 w-5" />
+                    <p className="font-semibold">Комнаты</p>
+                  </div>
+                  <Badge>{weeklyReview.room.cycleLabel}</Badge>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {children.map((child) => (
+                    <div key={child.id} className="rounded-2xl border border-slate-100 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-slate-900">{child.name}</p>
+                        <Badge tone={child.roomReviewed ? "success" : "warning"}>
+                          {child.roomReviewed ? "Проверено" : "Ждет проверки"}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        Еженедельная проверка комнаты по пятницам вечером.
+                      </p>
+                      <div className="mt-4 grid gap-3">
+                        <form action={reviewRoomAction.bind(null, child.id, "reward")}>
+                          <button
+                            type="submit"
+                            disabled={child.roomReviewed}
+                            className={`${actionButtonClass} w-full bg-emerald-600 text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50`}
+                          >
+                            Принять {formatPoints(weeklyReview.room.rewardPoints)}
+                          </button>
+                        </form>
+
+                        <form action={reviewRoomAction.bind(null, child.id, "penalty")}>
+                          <button
+                            type="submit"
+                            disabled={child.roomReviewed}
+                            className={`${actionButtonClass} w-full bg-rose-600 text-white hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50`}
+                          >
+                            Штраф {formatPoints(weeklyReview.room.penaltyPoints)}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[26px] bg-sky-50 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-sky-700">
+                    <ShieldCheck className="h-5 w-5" />
+                    <p className="font-semibold">Посудомойка недели</p>
+                  </div>
+                  <Badge>{weeklyReview.dishwasher.cycleLabel}</Badge>
+                </div>
+
+                {weeklyReview.dishwasher.currentChild ? (
+                  <>
+                    <p className="mt-4 text-xl font-semibold text-slate-950">
+                      Дежурный: {weeklyReview.dishwasher.currentChild.name}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      После итоговой проверки очередь автоматически перейдет следующему ребенку.
+                    </p>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      <form action={reviewDishwasherAction.bind(null, "reward")}>
+                        <button
+                          type="submit"
+                          disabled={weeklyReview.dishwasher.alreadyReviewed}
+                          className={`${actionButtonClass} w-full bg-emerald-600 text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          Принять {formatPoints(weeklyReview.dishwasher.rewardPoints)}
+                        </button>
+                      </form>
+
+                      <form action={reviewDishwasherAction.bind(null, "penalty")}>
+                        <button
+                          type="submit"
+                          disabled={weeklyReview.dishwasher.alreadyReviewed}
+                          className={`${actionButtonClass} w-full bg-rose-600 text-white hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          Штраф {formatPoints(weeklyReview.dishwasher.penaltyPoints)}
+                        </button>
+                      </form>
+                    </div>
+                    {weeklyReview.dishwasher.alreadyReviewed ? (
+                      <p className="mt-3 text-sm font-medium text-emerald-700">
+                        Эта неделя уже закрыта, очередь переключена дальше.
+                      </p>
+                    ) : null}
+                  </>
+                ) : (
+                  <EmptyState
+                    title="Дежурный не найден"
+                    description="Нужно проверить настройки текущей недели для посудомойки."
+                  />
+                )}
+              </div>
             </div>
           </SectionCard>
         </div>
 
         <div className="grid gap-6">
-          <SectionCard title="Общий счет" description="Сводка по всем детям на текущий момент.">
+          <SectionCard
+            title="Кто за что отвечает"
+            description="Краткая памятка по домашним обязанностям."
+          >
             <div className="space-y-3">
-              {summary.map((child) => (
-                <div key={child.id} className="rounded-2xl border border-slate-100 px-4 py-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-2xl" style={{ backgroundColor: child.color }} />
-                      <p className="font-semibold text-slate-900">{child.name}</p>
-                    </div>
-                    <p className="text-xl font-semibold text-slate-900">{formatPoints(child.balance)}</p>
+              {responsibilityNotes.map((item) => (
+                <div key={item.title} className="rounded-2xl border border-slate-100 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold text-slate-900">{item.title}</p>
+                    <Badge>{item.owner}</Badge>
                   </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">{item.note}</p>
                 </div>
               ))}
             </div>
           </SectionCard>
 
-          <SectionCard title="Активные задания" description="Их родитель сможет менять в следующем шаге.">
+          <SectionCard
+            title="Активные задачи"
+            description="Текущий список дел и их стоимость."
+          >
             <div className="space-y-3">
               {tasks.map((task) => (
                 <div key={task.id} className="rounded-2xl bg-slate-50/90 px-4 py-3">
@@ -147,32 +317,70 @@ export default async function ParentPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Следующие блоки" description="Что логично реализовать после каркаса.">
-            <div className="grid gap-3">
-              {[
-                {
-                  icon: Shield,
-                  title: "PIN-вход родителя",
-                  text: "Панель уже закрыта PIN-кодом и не открывается детям напрямую.",
-                },
-                {
-                  icon: Clock3,
-                  title: "Временное хранение фото",
-                  text: "Фото будет жить только до решения и удаляться сразу после него.",
-                },
-                {
-                  icon: ListChecks,
-                  title: "Ручные бонусы и штрафы",
-                  text: "Добавим форму, где можно быстро дать плюс или минус с причиной.",
-                },
-              ].map((item) => (
-                <div key={item.title} className="rounded-2xl bg-slate-50/90 p-4">
-                  <item.icon className="h-5 w-5 text-slate-600" />
-                  <p className="mt-3 font-semibold text-slate-900">{item.title}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">{item.text}</p>
-                </div>
-              ))}
+          <SectionCard
+            title="Последние события"
+            description="История нужна, чтобы быстро понимать, что уже внесено."
+          >
+            <div className="space-y-3">
+              {transactions.length ? (
+                transactions.map((transaction) => (
+                  <div key={transaction.id} className="rounded-2xl border border-slate-100 px-4 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-slate-900">{transaction.child.name}</p>
+                        <p className="mt-1 text-sm text-slate-500">{transaction.title}</p>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={`text-base font-semibold ${
+                            transaction.points >= 0 ? "text-emerald-600" : "text-rose-600"
+                          }`}
+                        >
+                          {formatPoints(transaction.points)}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-400">{formatDate(transaction.createdAt)}</p>
+                      </div>
+                    </div>
+                    {transaction.note ? (
+                      <p className="mt-3 text-sm leading-6 text-slate-500">{transaction.note}</p>
+                    ) : null}
+                  </div>
+                ))
+              ) : (
+                <EmptyState
+                  title="История пока пустая"
+                  description="После первых начислений и штрафов здесь появятся последние события."
+                />
+              )}
             </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Фото и удаленная проверка"
+            description="Следующий большой шаг после домашней версии для планшета."
+            actions={
+              <Badge tone={pendingSubmissions.length ? "warning" : "neutral"}>
+                {pendingSubmissions.length} заявок
+              </Badge>
+            }
+          >
+            {pendingSubmissions.length ? (
+              <div className="space-y-3">
+                {pendingSubmissions.map((submission) => (
+                  <div key={submission.id} className="rounded-2xl border border-slate-100 px-4 py-3">
+                    <p className="font-semibold text-slate-900">{submission.task.title}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {submission.child.name} • ожидает подтверждения
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="Очередь фото пока пустая"
+                description="Когда добавим фотоотчеты, здесь появятся заявки детей на проверку."
+              />
+            )}
           </SectionCard>
         </div>
       </main>

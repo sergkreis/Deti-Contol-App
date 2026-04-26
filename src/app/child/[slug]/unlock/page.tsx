@@ -37,7 +37,7 @@ export default async function ChildUnlockPage({ params }: PageProps) {
           <PinForm
             action={unlockChildAction}
             title={`Профиль ${data.child.name}`}
-            description="После правильного PIN-кода откроется личный кабинет ребенка."
+            description="После правильного PIN откроется личный кабинет ребенка."
             submitLabel="Открыть кабинет"
             hiddenFields={[{ name: "slug", value: slug }]}
           />

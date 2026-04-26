@@ -33,8 +33,8 @@ export default async function ChildPage({ params }: PageProps) {
     <Shell>
       <Header
         eyebrow={`Профиль ${child.name}`}
-        title={`${child.name}, выбирай задание и отправляй фото.`}
-        description="Это детский кабинет: здесь видны баллы, доступные дела и статус последних отправок."
+        title={`${child.name}, смотри свои задания и счет`}
+        description="Это личный кабинет ребенка: здесь видны баллы, доступные дела и статус последних отправок."
         showBack
         actions={<LogoutButton action={logoutChildAction} label="Выйти" />}
       />
@@ -49,7 +49,7 @@ export default async function ChildPage({ params }: PageProps) {
               <p className="text-sm uppercase tracking-[0.2em] text-slate-700">Текущий счет</p>
               <p className="mt-3 text-5xl font-semibold">{formatPoints(child.balance)}</p>
               <p className="mt-3 text-sm text-slate-700">
-                Когда отправишь фото, заявка попадет на проверку. Баллы начислятся после одобрения.
+                Следующий шаг в развитии кабинета — фотоотчет с телефона и отправка на проверку.
               </p>
             </div>
             <Link
@@ -57,11 +57,11 @@ export default async function ChildPage({ params }: PageProps) {
               className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
             >
               <Camera className="h-4 w-4" />
-              Выбрать задание
+              Посмотреть задания
             </Link>
           </SectionCard>
 
-          <SectionCard title="Последние заявки" description="Ребенок сразу видит, что уже отправил.">
+          <SectionCard title="Последние заявки" description="Ребенок сразу видит, что уже отправлял.">
             <div className="space-y-3">
               {child.submissions.length ? (
                 child.submissions.map((submission) => (
@@ -95,7 +95,7 @@ export default async function ChildPage({ params }: PageProps) {
               ) : (
                 <EmptyState
                   title="Пока нет отправленных заданий"
-                  description="Когда ребенок отправит первое фото, здесь появится статус проверки."
+                  description="Когда появятся фотоотчеты, здесь будет виден их статус."
                 />
               )}
             </div>
@@ -105,7 +105,7 @@ export default async function ChildPage({ params }: PageProps) {
         <div className="grid gap-6">
           <SectionCard
             title="Доступные задания"
-            description="Первая версия показывает фиксированные домашние дела из вашей бумажной системы."
+            description="Первая версия уже показывает реальные домашние дела вашей семьи."
           >
             <div id="tasks" className="grid gap-3 sm:grid-cols-2">
               {tasks.map((task) => (
@@ -132,7 +132,7 @@ export default async function ChildPage({ params }: PageProps) {
 
           <SectionCard
             title="Что будет дальше"
-            description="Следующий слой разработки уже очевиден и может строиться поверх этого экрана."
+            description="Следующий слой разработки уже хорошо понятен и будет строиться поверх этого кабинета."
           >
             <div className="grid gap-3">
               <div className="rounded-2xl bg-amber-50 p-4">
@@ -146,7 +146,7 @@ export default async function ChildPage({ params }: PageProps) {
                 <CircleAlert className="h-5 w-5 text-rose-600" />
                 <p className="mt-3 font-semibold text-slate-900">Штрафы и бонусы</p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Родитель сможет вручную добавить минус или плюс с коротким комментарием.
+                  Родитель сможет вручную добавлять плюс или минус с коротким комментарием.
                 </p>
               </div>
               <Link

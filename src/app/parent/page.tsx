@@ -1,8 +1,9 @@
-import { Clock3, ListTodo, ShieldCheck, Users } from "lucide-react";
+import { Check, Clock3, ImageIcon, ListTodo, ShieldCheck, Users, X } from "lucide-react";
 import { logoutParentAction } from "@/app/actions/auth";
 import {
   applyQuickCollectiveRuleAction,
   createManualTransactionAction,
+  reviewSubmissionAction,
   reviewDishwasherAction,
   reviewRoomAction,
 } from "@/app/actions/transactions";
@@ -271,10 +272,55 @@ export default async function ParentPage() {
               <div className="space-y-3">
                 {pendingSubmissions.map((submission) => (
                   <div key={submission.id} className="rounded-2xl border border-slate-100 px-4 py-3">
-                    <p className="font-semibold text-slate-900">{submission.task.title}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {submission.child.name} • ожидает подтверждения
-                    </p>
+                    <div className="flex items-start gap-4">
+                      <a
+                        href={`/submission-photo/${submission.id}`}
+                        className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {submission.photoPath ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={`/submission-photo/${submission.id}`}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="h-7 w-7 text-slate-400" />
+                        )}
+                      </a>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-slate-900">{submission.task.title}</p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {submission.child.name} • ожидает подтверждения • {formatDate(submission.submittedAt)}
+                        </p>
+                        {submission.note ? (
+                          <p className="mt-2 text-sm leading-6 text-slate-500">{submission.note}</p>
+                        ) : null}
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          <form action={reviewSubmissionAction.bind(null, submission.id, "approve")}>
+                            <button
+                              type="submit"
+                              className={`${actionButtonClass} w-full bg-emerald-600 text-white hover:bg-emerald-500`}
+                            >
+                              <Check className="mr-2 h-4 w-4" />
+                              Принять {formatPoints(submission.task.points)}
+                            </button>
+                          </form>
+
+                          <form action={reviewSubmissionAction.bind(null, submission.id, "reject")}>
+                            <button
+                              type="submit"
+                              className={`${actionButtonClass} w-full bg-rose-600 text-white hover:bg-rose-500`}
+                            >
+                              <X className="mr-2 h-4 w-4" />
+                              Отклонить
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

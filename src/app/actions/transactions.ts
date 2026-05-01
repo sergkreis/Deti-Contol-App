@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { hasParentSession } from "@/lib/auth";
+import { hasChildSession, hasParentSession } from "@/lib/auth";
 import {
   getCurrentDishwasherCycleKey,
   getCurrentRoomCycleKey,
@@ -12,6 +12,7 @@ import {
   setHouseholdSetting,
   weeklyRules,
 } from "@/lib/household";
+import { deleteSubmissionPhoto, saveSubmissionPhoto } from "@/lib/submission-photos";
 
 export type TransactionActionState = {
   error?: string;
@@ -36,10 +37,124 @@ async function requireParentAccess() {
   }
 }
 
+async function requireChildAccess(slug: string) {
+  if (!(await hasChildSession(slug))) {
+    redirect(`/child/${slug}/unlock`);
+  }
+}
+
 function refreshScreens() {
   revalidatePath("/");
   revalidatePath("/parent");
   revalidatePath("/child/[slug]", "page");
+}
+
+export async function createSubmissionAction(
+  childSlug: string,
+  taskId: string,
+  prevState: TransactionActionState = initialState,
+  formData: FormData,
+): Promise<TransactionActionState> {
+  void prevState;
+  await requireChildAccess(childSlug);
+
+  const note = String(formData.get("note") ?? "").trim();
+  const photo = formData.get("photo");
+
+  if (!(photo instanceof File)) {
+    return { error: "Выберите фото для отправки." };
+  }
+
+  const [child, task] = await Promise.all([
+    prisma.child.findUnique({
+      where: { slug: childSlug },
+      select: { id: true, slug: true },
+    }),
+    prisma.task.findUnique({
+      where: { id: taskId },
+      select: { id: true, isActive: true },
+    }),
+  ]);
+
+  if (!child || !task?.isActive) {
+    return { error: "Задача больше недоступна." };
+  }
+
+  let photoPath: string;
+
+  try {
+    photoPath = await saveSubmissionPhoto(photo, child.slug);
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Не удалось сохранить фото.",
+    };
+  }
+
+  try {
+    await prisma.submission.create({
+      data: {
+        childId: child.id,
+        taskId: task.id,
+        photoPath,
+        note: note || null,
+      },
+    });
+  } catch {
+    await deleteSubmissionPhoto(photoPath);
+    return { error: "Не удалось отправить фото. Попробуйте еще раз." };
+  }
+
+  refreshScreens();
+  redirect(`/child/${child.slug}`);
+}
+
+export async function reviewSubmissionAction(
+  submissionId: string,
+  outcome: "approve" | "reject",
+) {
+  await requireParentAccess();
+
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+    include: {
+      task: true,
+      child: {
+        select: { id: true, slug: true },
+      },
+    },
+  });
+
+  if (!submission || submission.status !== "PENDING") {
+    redirect("/parent");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.submission.update({
+      where: { id: submission.id },
+      data: {
+        status: outcome === "approve" ? "APPROVED" : "REJECTED",
+        reviewedAt: new Date(),
+      },
+    });
+
+    await tx.transaction.create({
+      data: {
+        childId: submission.childId,
+        submissionId: submission.id,
+        title: submission.task.title,
+        note:
+          outcome === "approve"
+            ? "Фотоотчет принят родителем."
+            : "Фотоотчет отклонен родителем.",
+        points: outcome === "approve" ? submission.task.points : 0,
+        type: outcome === "approve" ? "REWARD" : "REJECTION",
+      },
+    });
+  });
+
+  await deleteSubmissionPhoto(submission.photoPath);
+  refreshScreens();
+  redirect("/parent");
 }
 
 export async function createManualTransactionAction(

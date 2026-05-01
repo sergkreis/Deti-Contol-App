@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Camera, ChevronLeft, CircleAlert, Plus, ShieldCheck } from "lucide-react";
+import { Camera, ChevronLeft, CircleAlert, ShieldCheck } from "lucide-react";
 import { logoutChildAction } from "@/app/actions/auth";
+import { createSubmissionAction } from "@/app/actions/transactions";
 import { Badge } from "@/components/badge";
 import { EmptyState } from "@/components/empty-state";
 import { Header } from "@/components/header";
 import { LogoutButton } from "@/components/logout-button";
+import { PhotoSubmissionForm } from "@/components/photo-submission-form";
 import { SectionCard } from "@/components/section-card";
 import { Shell } from "@/components/shell";
 import { getChildPageData } from "@/lib/data";
@@ -123,13 +125,7 @@ export default async function ChildPage({ params }: PageProps) {
                   {task.description ? (
                     <p className="mt-2 text-sm leading-6 text-slate-500">{task.description}</p>
                   ) : null}
-                  <button
-                    type="button"
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:border-slate-300 hover:bg-slate-100"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Скоро: отправить фото
-                  </button>
+                  <PhotoSubmissionForm action={createSubmissionAction.bind(null, child.slug, task.id)} />
                 </div>
               ))}
             </div>

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Camera, ChevronLeft, CircleAlert, ShieldCheck } from "lucide-react";
-import { logoutChildAction } from "@/app/actions/auth";
+import { logoutChildAction, updateChildPinAction } from "@/app/actions/auth";
 import { createSubmissionAction } from "@/app/actions/transactions";
 import { Badge } from "@/components/badge";
+import { ChangeChildPinForm } from "@/components/change-child-pin-form";
 import { EmptyState } from "@/components/empty-state";
 import { Header } from "@/components/header";
 import { LogoutButton } from "@/components/logout-button";
@@ -158,6 +159,13 @@ export default async function ChildPage({ params }: PageProps) {
                 Вернуться на главную
               </Link>
             </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Безопасность"
+            description="PIN можно поменять прямо из открытого детского кабинета."
+          >
+            <ChangeChildPinForm action={updateChildPinAction.bind(null, child.slug)} />
           </SectionCard>
         </div>
       </main>

@@ -6,8 +6,8 @@ import {
   clearParentSession,
   createChildSession,
   createParentSession,
-  getChildPin,
   getParentPin,
+  hasChildSession,
   validatePin,
 } from "@/lib/auth";
 import {
@@ -15,9 +15,19 @@ import {
   getRateLimitStatus,
   registerFailedAttempt,
 } from "@/lib/auth-rate-limit";
+import {
+  isValidChildPinFormat,
+  setChildPin,
+  validateChildPin,
+} from "@/lib/child-pins";
 
 export type AuthState = {
   error?: string;
+};
+
+export type ChildPinState = {
+  error?: string;
+  success?: string;
 };
 
 function getRateLimitError(retryAfterSeconds: number) {
@@ -65,7 +75,7 @@ export async function unlockChildAction(
     return { error: getRateLimitError(rateLimit.retryAfterSeconds) };
   }
 
-  if (!validatePin(pin, getChildPin(slug))) {
+  if (!(await validateChildPin(slug, pin))) {
     await registerFailedAttempt(scope);
     return { error: "Неверный PIN ребенка." };
   }
@@ -83,4 +93,35 @@ export async function logoutParentAction() {
 export async function logoutChildAction() {
   await clearChildSession();
   redirect("/");
+}
+
+export async function updateChildPinAction(
+  slug: string,
+  _prevState: ChildPinState,
+  formData: FormData,
+): Promise<ChildPinState> {
+  if (!(await hasChildSession(slug))) {
+    redirect(`/child/${slug}/unlock`);
+  }
+
+  const currentPin = String(formData.get("currentPin") ?? "").trim();
+  const newPin = String(formData.get("newPin") ?? "").trim();
+  const confirmPin = String(formData.get("confirmPin") ?? "").trim();
+
+  if (!(await validateChildPin(slug, currentPin))) {
+    return { error: "Текущий PIN введен неверно." };
+  }
+
+  if (!isValidChildPinFormat(newPin)) {
+    return { error: "Новый PIN должен состоять из 4 цифр." };
+  }
+
+  if (newPin !== confirmPin) {
+    return { error: "Подтверждение PIN не совпадает." };
+  }
+
+  await setChildPin(slug, newPin);
+  await clearFailedAttempts(`child:${slug}`);
+
+  return { success: "PIN обновлен." };
 }

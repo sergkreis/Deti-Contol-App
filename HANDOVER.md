@@ -80,6 +80,8 @@ parent can approve/reject pending photo submissions
 uploaded proof photo is deleted after parent decision
 private uploads are stored under /uploads/submissions and ignored by git
 photo route is protected by parent or matching child session
+children can change their own PIN from inside the child dashboard
+child PIN values can be overridden in SQLite Setting keys child.pin.<slug>
 ```
 
 ## Важные файлы
@@ -265,7 +267,7 @@ pm2 status
 ```text
 Do not run npm run db:seed during normal VM update; it resets seeded app data.
 Keep server .env, prisma/dev.db, and uploads/ when replacing the app folder.
-Last deployed commit: da8d909.
+Last deployed commit: df90aaa.
 Last server backup after deploy: /home/codex/deti-control-backup-20260501-142317
 ```
 
@@ -278,7 +280,9 @@ build succeeds on server
 pm2 autostart is configured
 unlock routes exist and return 200
 photo submission moderation flow is deployed on VM
-server checkout is main at da8d909
+child PIN change flow is deployed on VM
+server checkout is main at df90aaa
+child PINs were reset on VM through server .env and SQLite Setting overrides
 ```
 
 ## Открытые задачи
@@ -301,8 +305,7 @@ Done on 2026-05-01 in commit da8d909 and deployed to VM.
 1. Runtime-check photo upload from a real child phone on the home network.
 2. Runtime-check parent approve/reject from the parent device.
 3. Добавить manual bonus / penalty actions из parent UI, если текущей формы недостаточно.
-4. Заменить placeholder PINs на реальные family values только в .env.
-5. Опционально добавить nginx reverse proxy и локальный домен.
+4. Опционально добавить nginx reverse proxy и локальный домен.
 ```
 
 ## Запрещено

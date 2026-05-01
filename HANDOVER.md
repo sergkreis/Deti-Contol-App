@@ -267,7 +267,8 @@ pm2 status
 ```text
 Do not run npm run db:seed during normal VM update; it resets seeded app data.
 Keep server .env, prisma/dev.db, and uploads/ when replacing the app folder.
-Last deployed commit: df90aaa.
+Last app deploy commit: df90aaa.
+Last server checkout after docs-only handover pull: 426b27f.
 Last server backup after deploy: /home/codex/deti-control-backup-20260501-142317
 ```
 
@@ -281,7 +282,7 @@ pm2 autostart is configured
 unlock routes exist and return 200
 photo submission moderation flow is deployed on VM
 child PIN change flow is deployed on VM
-server checkout is main at df90aaa
+server checkout is main at 426b27f
 child PINs were reset on VM through server .env and SQLite Setting overrides
 ```
 

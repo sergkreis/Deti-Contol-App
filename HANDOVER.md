@@ -1,100 +1,88 @@
-# Deti Control Handover
+# Deti Control - Handover
 
-## Project summary
+Последнее обновление: 2026-05-01
 
-Deti Control is a family web app for tracking children's household chores, points, and parent approvals.
+## Быстрый контекст
 
-Current product direction:
+Deti Control - семейное web-приложение для учета домашних заданий детей, баллов, подтверждений родителей и истории. Продукт строится сначала как web app, не native mobile app.
 
-- web app first, not native mobile
-- 3 children with separate profiles
-- parent moderation flow
-- points, penalties, and history
-- temporary photo proof planned next
-- PIN protection already added for parent and each child
+Глобальный индекс проектов:
 
-## Tech stack
+```text
+C:\Users\Sergej\Documents\Codex\PROJECTS.md
+```
 
-- Next.js App Router
-- TypeScript
-- Tailwind CSS
-- Prisma
-- SQLite
-- pm2 for runtime on server
+## Пути и репозиторий
 
-## Local project path
+Локальный путь:
 
 ```text
 C:\Users\Sergej\Documents\Codex\Deti Control
 ```
 
-## Deployment
-
-Current deployment target:
+GitHub:
 
 ```text
-Ubuntu VM 102 on Proxmox
+https://github.com/sergkreis/Deti-Contol-App.git
 ```
 
-Current app URL:
+Ветка:
+
+```text
+main
+```
+
+Живое приложение:
 
 ```text
 http://192.168.1.250:3000
 ```
 
-SSH access:
+## Технологии
 
 ```text
-ssh codex@192.168.1.250
+Next.js App Router
+TypeScript
+Tailwind CSS
+Prisma
+SQLite
+pm2 на сервере
 ```
 
-Process manager:
+## Основные возможности
 
 ```text
-pm2
+главная страница
+страницы профилей детей
+parent dashboard
+seeded demo data для Stefan, Alwina, Lukas
+SQLite + Prisma schema
+parent PIN gate
+child-specific PIN gate
+logout для parent и child sessions
 ```
 
-Process name:
+Текущее направление продукта:
 
 ```text
-deti-control
+3 child profiles
+parent moderation flow
+points, penalties, history
+temporary photo proof planned next
+PIN protection already added
 ```
 
-Useful commands on server:
-
-```bash
-pm2 status
-pm2 logs deti-control
-pm2 restart deti-control --update-env
-```
-
-## Current features
-
-- main landing page
-- child profile pages
-- parent dashboard
-- seeded demo data for Stefan, Alwina, Lukas
-- SQLite + Prisma schema
-- parent PIN gate
-- child-specific PIN gate
-- logout for parent and child sessions
-
-## Current auth env
-
-Stored in `.env`:
+Текущее реализованное состояние после 2026-05-01:
 
 ```text
-SESSION_SECRET=<long-random-secret>
-SESSION_SECURE_COOKIE=false
-PARENT_PIN=<parent-pin>
-CHILD_PIN_STEFAN=<child-pin>
-CHILD_PIN_ALWINA=<child-pin>
-CHILD_PIN_LUKAS=<child-pin>
+photo upload from child device is implemented
+parent can approve/reject pending photo submissions
+uploaded proof photo is deleted after parent decision
+private uploads are stored under /uploads/submissions and ignored by git
+photo route is protected by parent or matching child session
 ```
 
-Real PIN values must not be committed to the repository.
-
-## Important files
+## Важные файлы
 
 Main app routes:
 
@@ -106,7 +94,7 @@ src/app/child/[slug]/page.tsx
 src/app/child/[slug]/unlock/page.tsx
 ```
 
-Auth/session logic:
+Auth/session:
 
 ```text
 src/lib/auth.ts
@@ -115,7 +103,7 @@ src/components/pin-form.tsx
 src/components/logout-button.tsx
 ```
 
-Data/model layer:
+Data/model:
 
 ```text
 prisma/schema.prisma
@@ -124,57 +112,212 @@ src/lib/data.ts
 src/lib/prisma.ts
 ```
 
-## Database
+## Environment и секреты
 
-Current DB:
+Хранятся в `.env`:
+
+```text
+SESSION_SECRET=<long-random-secret>
+SESSION_SECURE_COOKIE=false
+PARENT_PIN=<parent-pin>
+CHILD_PIN_STEFAN=<child-pin>
+CHILD_PIN_ALWINA=<child-pin>
+CHILD_PIN_LUKAS=<child-pin>
+```
+
+Реальные PIN и secret values не коммитить.
+
+## База данных
+
+Текущая локальная DB:
 
 ```text
 prisma/dev.db
 ```
 
-Seeded with:
+Seed содержит:
 
-- 3 children
-- starter task list from the paper system
-- sample submissions
-- sample transactions
+```text
+3 children
+starter task list from the paper system
+sample submissions
+sample transactions
+```
 
-## Deployment workflow used so far
+## Деплой
 
-The project was deployed manually to the server.
+Target:
 
-High-level flow:
+```text
+Ubuntu VM 102 on Proxmox
+Host/IP: 192.168.1.250
+SSH user: codex
+App path on server: /home/codex/deti-control
+Process manager: pm2
+Process name: deti-control
+```
 
-1. copy project files to `/home/codex/deti-control`
-2. run `npm install`
-3. run `npx prisma generate`
-4. run `npx prisma db push --skip-generate`
-5. run `npm run db:seed`
-6. run `npm run build`
-7. run with `pm2`
+SSH:
 
-## Known state
+```bash
+ssh codex@192.168.1.250
+```
 
-- app is live on `192.168.1.250:3000`
-- build succeeds locally
-- build succeeds on server
-- pm2 autostart is configured
-- unlock routes exist and return `200`
+pm2:
 
-## Next recommended steps
+```bash
+pm2 status
+pm2 logs deti-control
+pm2 restart deti-control --update-env
+```
 
-1. Implement real photo upload from child device.
-2. Add parent moderation actions: approve / reject.
-3. Delete uploaded photo after parent decision.
-4. Add manual bonus / penalty actions from parent UI.
-5. Replace placeholder PINs with real family values.
-6. Optionally add nginx reverse proxy and nicer local domain.
+## Проверка и команды
 
-## Notes for future chats
+Install:
 
-When resuming work:
+```bash
+npm install
+```
 
-- open `PROJECTS.md`
-- open this `HANDOVER.md`
-- verify live app at `192.168.1.250:3000`
-- check pm2 status on the server before changing deployment
+Dev:
+
+```bash
+npm run dev
+```
+
+Build:
+
+```bash
+npm run build
+```
+
+Start:
+
+```bash
+npm run start
+```
+
+Lint:
+
+```bash
+npm run lint
+```
+
+Prisma:
+
+```bash
+npm run db:generate
+npm run db:push
+npm run db:seed
+```
+
+## Deploy workflow
+
+Проект был развернут на сервер вручную.
+
+Использованный high-level flow:
+
+```text
+1. copy project files to /home/codex/deti-control
+2. npm install
+3. npx prisma generate
+4. npx prisma db push --skip-generate
+5. npm run db:seed
+6. npm run build
+7. run with pm2
+```
+
+Текущий целевой workflow:
+
+```text
+edit locally -> lint/build -> commit -> push to GitHub -> deploy/update VM after approval
+```
+
+Точный pull/update deploy command на VM еще нужно зафиксировать после следующего деплоя.
+
+Текущий проверенный deploy/update flow от 2026-05-01:
+
+```bash
+ssh codex@192.168.1.250
+cd /home/codex
+rm -rf deti-control-new
+git clone https://github.com/sergkreis/Deti-Contol-App.git deti-control-new
+cd deti-control-new
+git switch main
+cp ../deti-control/.env .env
+mkdir -p prisma
+cp ../deti-control/prisma/dev.db prisma/dev.db
+if [ -d ../deti-control/uploads ]; then cp -a ../deti-control/uploads ./uploads; fi
+npm ci
+npm run db:generate
+npm run db:push
+npm run build
+cd /home/codex
+ts=$(date +%Y%m%d-%H%M%S)
+mv deti-control "deti-control-backup-$ts"
+mv deti-control-new deti-control
+pm2 restart deti-control --update-env
+pm2 status
+```
+
+Важно:
+
+```text
+Do not run npm run db:seed during normal VM update; it resets seeded app data.
+Keep server .env, prisma/dev.db, and uploads/ when replacing the app folder.
+Last deployed commit: da8d909.
+Last server backup after deploy: /home/codex/deti-control-backup-20260501-142317
+```
+
+## Текущее состояние
+
+```text
+app is live on 192.168.1.250:3000
+build succeeds locally
+build succeeds on server
+pm2 autostart is configured
+unlock routes exist and return 200
+photo submission moderation flow is deployed on VM
+server checkout is main at da8d909
+```
+
+## Открытые задачи
+
+Главная следующая задача:
+
+```text
+Implement real photo upload -> moderation -> approve/reject -> delete photo flow.
+```
+
+Статус:
+
+```text
+Done on 2026-05-01 in commit da8d909 and deployed to VM.
+```
+
+Рекомендованные шаги:
+
+```text
+1. Runtime-check photo upload from a real child phone on the home network.
+2. Runtime-check parent approve/reject from the parent device.
+3. Добавить manual bonus / penalty actions из parent UI, если текущей формы недостаточно.
+4. Заменить placeholder PINs на реальные family values только в .env.
+5. Опционально добавить nginx reverse proxy и локальный домен.
+```
+
+## Запрещено
+
+```text
+Не коммитить .env.
+Не коммитить реальные PIN, SESSION_SECRET, SQLite DB, uploaded photos или private family data.
+Не деплоить/update VM без явного разрешения.
+Не обходить GitHub; GitHub main должен быть источником правды.
+```
+
+## Как продолжать в новом чате
+
+```text
+Open C:\Users\Sergej\Documents\Codex\PROJECTS.md and continue Deti Control.
+Then open this HANDOVER.md.
+Before deployment changes, verify live app at http://192.168.1.250:3000 and check pm2 status.
+```

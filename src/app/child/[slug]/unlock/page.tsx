@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { unlockChildAction } from "@/app/actions/auth";
-import { PinForm } from "@/components/pin-form";
 import { Header } from "@/components/header";
+import { PinForm } from "@/components/pin-form";
 import { SectionCard } from "@/components/section-card";
 import { Shell } from "@/components/shell";
 import { getChildPageData } from "@/lib/data";
@@ -23,6 +23,7 @@ export default async function ChildUnlockPage({ params }: PageProps) {
   return (
     <Shell>
       <Header
+        variant="gate"
         eyebrow={`Вход для ${data.child.name}`}
         title={`Личный вход для ${data.child.name}`}
         description="Введите детский PIN-код, чтобы открыть только этот кабинет."

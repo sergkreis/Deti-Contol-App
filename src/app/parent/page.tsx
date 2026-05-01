@@ -1,11 +1,11 @@
-import { Clock3, ShieldCheck, Users } from "lucide-react";
+import { Clock3, ListTodo, ShieldCheck, Users } from "lucide-react";
+import { logoutParentAction } from "@/app/actions/auth";
 import {
   applyQuickCollectiveRuleAction,
   createManualTransactionAction,
   reviewDishwasherAction,
   reviewRoomAction,
 } from "@/app/actions/transactions";
-import { logoutParentAction } from "@/app/actions/auth";
 import { Badge } from "@/components/badge";
 import { EmptyState } from "@/components/empty-state";
 import { Header } from "@/components/header";
@@ -22,6 +22,7 @@ const actionButtonClass =
 
 export default async function ParentPage() {
   await requireParentSession();
+
   const {
     children,
     summary,
@@ -38,40 +39,18 @@ export default async function ParentPage() {
   return (
     <Shell>
       <Header
+        variant="parent"
         eyebrow="Родительский режим"
-        title="Быстрый домашний пульт"
-        description="Первая домашняя версия под планшет: быстрые повседневные действия, недельная проверка и короткая история по семье."
-        showBack
+        title="Домашний пульт"
+        description="Главный экран для быстрых решений: сначала сегодняшние действия, затем недельная проверка и уже потом история."
         actions={<LogoutButton action={logoutParentAction} label="Выйти" />}
       />
 
-      <main className="grid gap-6 xl:grid-cols-[1.15fr_0.95fr]">
+      <main className="grid gap-6 xl:grid-cols-[1.2fr_0.85fr]">
         <div className="grid gap-6">
           <SectionCard
-            title="Общий счет"
-            description="Сводка по всем детям на текущий момент."
-          >
-            <div className="grid gap-3 sm:grid-cols-3">
-              {summary.map((child) => (
-                <div key={child.id} className="rounded-2xl border border-slate-100 px-4 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-2xl" style={{ backgroundColor: child.color }} />
-                    <div>
-                      <p className="font-semibold text-slate-900">{child.name}</p>
-                      <p className="text-sm text-slate-500">Текущий счет</p>
-                    </div>
-                  </div>
-                  <p className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                    {formatPoints(child.balance)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            title="Быстрые действия на сегодня"
-            description="Самое частое домашнее использование: общие правила и ручные начисления с комментарием."
+            title="Приоритеты сегодня"
+            description="Здесь собраны самые частые действия, которые должны выполняться в одно-два нажатия."
           >
             <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
               <div className="rounded-[26px] bg-amber-50 p-5">
@@ -175,7 +154,7 @@ export default async function ParentPage() {
 
           <SectionCard
             title="Проверка недели"
-            description="Отдельный ритуал для пятничных комнат и недельного дежурства по посудомойке."
+            description="Второй по важности сценарий после ежедневных действий: комнаты и посудомойка."
           >
             <div className="grid gap-6">
               <div>
@@ -278,39 +257,53 @@ export default async function ParentPage() {
               </div>
             </div>
           </SectionCard>
+
+          <SectionCard
+            title="Очередь фото и удаленная проверка"
+            description="Пока это вторичный блок. Он не должен спорить по важности с домашним планшетным сценарием."
+            actions={
+              <Badge tone={pendingSubmissions.length ? "warning" : "neutral"}>
+                {pendingSubmissions.length} заявок
+              </Badge>
+            }
+          >
+            {pendingSubmissions.length ? (
+              <div className="space-y-3">
+                {pendingSubmissions.map((submission) => (
+                  <div key={submission.id} className="rounded-2xl border border-slate-100 px-4 py-3">
+                    <p className="font-semibold text-slate-900">{submission.task.title}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {submission.child.name} • ожидает подтверждения
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="Очередь фото пока пустая"
+                description="Когда добавим фотоотчеты, здесь появятся заявки детей на проверку."
+              />
+            )}
+          </SectionCard>
         </div>
 
         <div className="grid gap-6">
           <SectionCard
-            title="Кто за что отвечает"
-            description="Краткая памятка по домашним обязанностям."
+            title="Счет семьи"
+            description="Компактная сводка без отвлечений. Просто общий баланс на текущий момент."
           >
-            <div className="space-y-3">
-              {responsibilityNotes.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-slate-100 px-4 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-slate-900">{item.title}</p>
-                    <Badge>{item.owner}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">{item.note}</p>
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            title="Активные задачи"
-            description="Текущий список дел и их стоимость."
-          >
-            <div className="space-y-3">
-              {tasks.map((task) => (
-                <div key={task.id} className="rounded-2xl bg-slate-50/90 px-4 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-slate-900">{task.title}</p>
-                      <p className="mt-1 text-sm text-slate-500">{task.category}</p>
+            <div className="grid gap-3">
+              {summary.map((child) => (
+                <div key={child.id} className="rounded-2xl border border-slate-100 px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl" style={{ backgroundColor: child.color }} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-slate-900">{child.name}</p>
+                      <p className="text-sm text-slate-500">Текущий счет</p>
                     </div>
-                    <Badge tone="success">{formatPoints(task.points)}</Badge>
+                    <p className="text-2xl font-semibold tracking-tight text-slate-950">
+                      {formatPoints(child.balance)}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -319,7 +312,7 @@ export default async function ParentPage() {
 
           <SectionCard
             title="Последние события"
-            description="История нужна, чтобы быстро понимать, что уже внесено."
+            description="История ниже по иерархии: она нужна для понимания, но не должна перетягивать внимание с действий."
           >
             <div className="space-y-3">
               {transactions.length ? (
@@ -356,31 +349,45 @@ export default async function ParentPage() {
           </SectionCard>
 
           <SectionCard
-            title="Фото и удаленная проверка"
-            description="Следующий большой шаг после домашней версии для планшета."
+            title="Кто отвечает сейчас"
+            description="Памятка по закрепленным и ротационным обязанностям."
+          >
+            <div className="space-y-3">
+              {responsibilityNotes.map((item) => (
+                <div key={item.title} className="rounded-2xl border border-slate-100 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold text-slate-900">{item.title}</p>
+                    <Badge>{item.owner}</Badge>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">{item.note}</p>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Активные задачи"
+            description="Справочный список правил и стоимости задач. Это не главный акцент экрана."
             actions={
-              <Badge tone={pendingSubmissions.length ? "warning" : "neutral"}>
-                {pendingSubmissions.length} заявок
+              <Badge tone="neutral">
+                <ListTodo className="mr-1 h-3.5 w-3.5" />
+                {tasks.length} задач
               </Badge>
             }
           >
-            {pendingSubmissions.length ? (
-              <div className="space-y-3">
-                {pendingSubmissions.map((submission) => (
-                  <div key={submission.id} className="rounded-2xl border border-slate-100 px-4 py-3">
-                    <p className="font-semibold text-slate-900">{submission.task.title}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {submission.child.name} • ожидает подтверждения
-                    </p>
+            <div className="space-y-3">
+              {tasks.map((task) => (
+                <div key={task.id} className="rounded-2xl bg-slate-50/90 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">{task.title}</p>
+                      <p className="mt-1 text-sm text-slate-500">{task.category}</p>
+                    </div>
+                    <Badge tone="success">{formatPoints(task.points)}</Badge>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title="Очередь фото пока пустая"
-                description="Когда добавим фотоотчеты, здесь появятся заявки детей на проверку."
-              />
-            )}
+                </div>
+              ))}
+            </div>
           </SectionCard>
         </div>
       </main>

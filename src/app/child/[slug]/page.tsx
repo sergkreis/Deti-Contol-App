@@ -8,9 +8,9 @@ import { Header } from "@/components/header";
 import { LogoutButton } from "@/components/logout-button";
 import { SectionCard } from "@/components/section-card";
 import { Shell } from "@/components/shell";
+import { getChildPageData } from "@/lib/data";
 import { requireChildSession } from "@/lib/auth";
 import { formatDate, formatPoints } from "@/lib/format";
-import { getChildPageData } from "@/lib/data";
 
 type PageProps = {
   params: Promise<{
@@ -32,9 +32,10 @@ export default async function ChildPage({ params }: PageProps) {
   return (
     <Shell>
       <Header
+        variant="child"
         eyebrow={`Профиль ${child.name}`}
-        title={`${child.name}, смотри свои задания и счет`}
-        description="Это личный кабинет ребенка: здесь видны баллы, доступные дела и статус последних отправок."
+        title={`${child.name}, здесь твои задачи и текущий счет`}
+        description="Личный кабинет ребенка показывает баллы, доступные дела и статус последних отправок."
         showBack
         actions={<LogoutButton action={logoutChildAction} label="Выйти" />}
       />
@@ -49,7 +50,8 @@ export default async function ChildPage({ params }: PageProps) {
               <p className="text-sm uppercase tracking-[0.2em] text-slate-700">Текущий счет</p>
               <p className="mt-3 text-5xl font-semibold">{formatPoints(child.balance)}</p>
               <p className="mt-3 text-sm text-slate-700">
-                Следующий шаг в развитии кабинета — фотоотчет с телефона и отправка на проверку.
+                Следующий шаг в развитии кабинета — фотоотчет с телефона и отправка на
+                проверку.
               </p>
             </div>
             <Link
@@ -61,7 +63,10 @@ export default async function ChildPage({ params }: PageProps) {
             </Link>
           </SectionCard>
 
-          <SectionCard title="Последние заявки" description="Ребенок сразу видит, что уже отправлял.">
+          <SectionCard
+            title="Последние заявки"
+            description="Здесь видно, что уже было отправлено на проверку."
+          >
             <div className="space-y-3">
               {child.submissions.length ? (
                 child.submissions.map((submission) => (
@@ -132,7 +137,7 @@ export default async function ChildPage({ params }: PageProps) {
 
           <SectionCard
             title="Что будет дальше"
-            description="Следующий слой разработки уже хорошо понятен и будет строиться поверх этого кабинета."
+            description="Следующий слой разработки уже понятен и будет строиться поверх этого кабинета."
           >
             <div className="grid gap-3">
               <div className="rounded-2xl bg-amber-50 p-4">

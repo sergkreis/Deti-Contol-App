@@ -1,5 +1,4 @@
 import { SubmissionStatus } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import { hasParentSession } from "@/lib/auth";
 import {
   collectiveRules,
@@ -7,38 +6,40 @@ import {
   responsibilityTemplates,
   weeklyRules,
 } from "@/lib/household";
+import { prisma } from "@/lib/prisma";
 
 function buildBalance(points: Array<{ points: number }>) {
   return points.reduce((sum, item) => sum + item.points, 0);
 }
 
 export async function getDashboardData() {
-  const [children, pendingCount, recentTransactions, householdState, parentUnlocked] = await Promise.all([
-    prisma.child.findMany({
-      where: { isActive: true },
-      include: {
-        transactions: {
-          orderBy: { createdAt: "desc" },
+  const [children, pendingCount, recentTransactions, householdState, parentUnlocked] =
+    await Promise.all([
+      prisma.child.findMany({
+        where: { isActive: true },
+        include: {
+          transactions: {
+            orderBy: { createdAt: "desc" },
+          },
+          submissions: {
+            where: { status: SubmissionStatus.PENDING },
+          },
         },
-        submissions: {
-          where: { status: SubmissionStatus.PENDING },
+        orderBy: { name: "asc" },
+      }),
+      prisma.submission.count({
+        where: { status: SubmissionStatus.PENDING },
+      }),
+      prisma.transaction.findMany({
+        include: {
+          child: true,
         },
-      },
-      orderBy: { name: "asc" },
-    }),
-    prisma.submission.count({
-      where: { status: SubmissionStatus.PENDING },
-    }),
-    prisma.transaction.findMany({
-      include: {
-        child: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 3,
-    }),
-    getHouseholdState(),
-    hasParentSession(),
-  ]);
+        orderBy: { createdAt: "desc" },
+        take: 3,
+      }),
+      getHouseholdState(),
+      hasParentSession(),
+    ]);
 
   const currentDishwasherChild = children.find(
     (child) => child.slug === householdState.currentDishwasherSlug,

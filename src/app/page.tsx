@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { ArrowRight, ClipboardList, LockKeyhole, Shield, Sparkles, Users } from "lucide-react";
+import {
+  ArrowRight,
+  BellDot,
+  ClipboardList,
+  LockKeyhole,
+  Shield,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { applyQuickCollectiveRuleAction } from "@/app/actions/transactions";
 import { Badge } from "@/components/badge";
 import { Header } from "@/components/header";
@@ -9,7 +17,7 @@ import { Shell } from "@/components/shell";
 import { formatDate, formatPoints } from "@/lib/format";
 import { getDashboardData } from "@/lib/data";
 
-const quickButtonClass =
+const actionButtonClass =
   "inline-flex items-center justify-center rounded-full px-4 py-3 text-sm font-semibold transition";
 
 export default async function Home() {
@@ -26,20 +34,23 @@ export default async function Home() {
   } = await getDashboardData();
 
   const tablesRule = collectiveRules[0];
+  const roomFocus = weeklyFocus.find((item) => item.id === "room-review");
+  const dishwasherFocus = weeklyFocus.find((item) => item.id === "dishwasher-rotation");
 
   return (
     <Shell>
       <Header
+        variant="family"
         eyebrow="Deti Control"
-        title="Семейная доска для дома"
-        description="Планшетный режим для повседневной жизни: видно общий счет, текущие обязанности, что проверить сегодня и что важно по неделе."
+        title="Семейная доска"
+        description="Домашний экран для планшета: сразу видно баланс, дежурства, очередь на проверку и самые частые действия."
       />
 
-      <main className="grid gap-6 xl:grid-cols-[1.4fr_0.95fr]">
-        <div className="grid gap-6">
+      <main className="grid gap-6">
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.9fr]">
           <SectionCard
-            title="Дети"
-            description="Главные карточки для общего планшета. У каждого виден баланс и короткий статус."
+            title="Семья сегодня"
+            description="Главный обзор без лишнего шума: кто как идет, у кого есть заявки и что важно по неделе."
             actions={<Badge tone="warning">{pendingCount} ждут проверки</Badge>}
           >
             <div className="grid gap-4 md:grid-cols-3">
@@ -84,19 +95,49 @@ export default async function Home() {
                 </div>
               ))}
             </div>
+
+            <div className="mt-5 grid gap-3 lg:grid-cols-3">
+              <div className="rounded-2xl bg-slate-950 px-4 py-4 text-white">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+                  Очередь
+                </p>
+                <p className="mt-3 text-3xl font-semibold">{pendingCount}</p>
+                <p className="mt-2 text-sm text-white/70">Столько фото и задач ждут подтверждения.</p>
+              </div>
+
+              <div className="rounded-2xl bg-white px-4 py-4 ring-1 ring-slate-200">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Посудомойка
+                </p>
+                <p className="mt-3 text-lg font-semibold text-slate-950">
+                  {dishwasherFocus && "currentOwnerName" in dishwasherFocus
+                    ? dishwasherFocus.currentOwnerName
+                    : "Не назначен"}
+                </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  {dishwasherFocus?.cycleLabel ?? "Неделя не определена"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-white px-4 py-4 ring-1 ring-slate-200">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Комнаты
+                </p>
+                <p className="mt-3 text-lg font-semibold text-slate-950">{roomFocus?.cycleLabel ?? "Без срока"}</p>
+                <p className="mt-2 text-sm text-slate-500">Недельная проверка и закрытие цикла.</p>
+              </div>
+            </div>
           </SectionCard>
 
           <SectionCard
-            title="Что проверить сегодня"
-            description="Самое частое домашнее действие. Если родитель уже вошел, можно нажать сразу с планшета."
+            title="Что важно сейчас"
+            description="Главная зона действий для планшета: сначала то, что нужно решить сегодня, затем недельный фокус."
           >
-            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="grid gap-4">
               <div className="rounded-[26px] bg-amber-50 p-5">
                 <div className="flex items-center gap-2 text-amber-700">
                   <Users className="h-5 w-5" />
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em]">
-                    Коллективная задача
-                  </p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em]">Сегодня</p>
                 </div>
                 <p className="mt-4 text-xl font-semibold text-slate-950">{tablesRule.title}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{tablesRule.description}</p>
@@ -118,7 +159,7 @@ export default async function Home() {
                     >
                       <button
                         type="submit"
-                        className={`${quickButtonClass} w-full bg-emerald-600 text-white hover:bg-emerald-500`}
+                        className={`${actionButtonClass} w-full bg-emerald-600 text-white hover:bg-emerald-500`}
                       >
                         Всем {formatPoints(tablesRule.rewardPoints)}
                       </button>
@@ -135,7 +176,7 @@ export default async function Home() {
                     >
                       <button
                         type="submit"
-                        className={`${quickButtonClass} w-full bg-rose-600 text-white hover:bg-rose-500`}
+                        className={`${actionButtonClass} w-full bg-rose-600 text-white hover:bg-rose-500`}
                       >
                         Всем {formatPoints(tablesRule.penaltyPoints)}
                       </button>
@@ -179,21 +220,31 @@ export default async function Home() {
           </SectionCard>
         </div>
 
-        <div className="grid gap-6">
+        <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
           <SectionCard
-            title="Быстрый доступ"
-            description="Планшет показывает общую картину, а изменения доступны только через защищенный вход."
+            title="Кто за что отвечает"
+            description="Домашняя памятка без лишней бюрократии: видно роли, но любую задачу можно подхватить."
           >
-            <div className="grid gap-3">
+            <div className="space-y-3">
+              {responsibilityNotes.map((item) => (
+                <div key={item.title} className="rounded-2xl border border-slate-100 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold text-slate-900">{item.title}</p>
+                    <Badge>{item.owner}</Badge>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">{item.note}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <Link
                 href="/parent/unlock"
                 className="flex items-center justify-between rounded-2xl bg-slate-950 px-5 py-4 text-white hover:bg-slate-800"
               >
                 <div>
                   <p className="font-semibold">Родительский режим</p>
-                  <p className="mt-1 text-sm text-slate-300">
-                    Начислить, оштрафовать, проверить неделю и посмотреть историю.
-                  </p>
+                  <p className="mt-1 text-sm text-slate-300">Начислить, проверить неделю и открыть историю.</p>
                 </div>
                 <Shield className="h-5 w-5" />
               </Link>
@@ -211,71 +262,51 @@ export default async function Home() {
           </SectionCard>
 
           <SectionCard
-            title="Кто за что отвечает"
-            description="Видимая договоренность дома. Это не запрет для других, а понятная памятка."
+            title="Последние события"
+            description="Короткая лента без перегруза: только последние изменения, чтобы быстро понять, что уже внесено."
+            actions={
+              pendingCount > 0 ? (
+                <Badge tone="warning">
+                  <BellDot className="mr-1 h-3.5 w-3.5" />
+                  Есть очередь
+                </Badge>
+              ) : null
+            }
           >
-            <div className="space-y-3">
-              {responsibilityNotes.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-slate-100 px-4 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-slate-900">{item.title}</p>
-                    <Badge>{item.owner}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">{item.note}</p>
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            title="Последняя активность"
-            description="Короткая лента, чтобы быстро понимать, что уже внесено."
-          >
-            <div className="space-y-3">
+            <div className="grid gap-3 lg:grid-cols-3">
               {recentTransactions.map((transaction) => (
-                <div key={transaction.id} className="rounded-2xl bg-slate-50 px-4 py-3">
+                <div key={transaction.id} className="rounded-2xl bg-slate-50 px-4 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-slate-900">{transaction.child.name}</p>
                       <p className="mt-1 text-sm text-slate-500">{transaction.title}</p>
                     </div>
-                    <div className="text-right">
-                      <p
-                        className={`font-semibold ${
-                          transaction.points >= 0 ? "text-emerald-600" : "text-rose-600"
-                        }`}
-                      >
-                        {formatPoints(transaction.points)}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">{formatDate(transaction.createdAt)}</p>
-                    </div>
+                    <p
+                      className={`text-base font-semibold ${
+                        transaction.points >= 0 ? "text-emerald-600" : "text-rose-600"
+                      }`}
+                    >
+                      {formatPoints(transaction.points)}
+                    </p>
                   </div>
                   {transaction.note ? (
                     <p className="mt-3 text-sm leading-6 text-slate-500">{transaction.note}</p>
                   ) : null}
+                  <p className="mt-3 text-xs text-slate-400">{formatDate(transaction.createdAt)}</p>
                 </div>
               ))}
             </div>
-          </SectionCard>
 
-          <SectionCard
-            title="Как пользоваться"
-            description="Это уже первая домашняя версия, с которой можно реально жить без бумаги."
-          >
-            <div className="grid gap-3">
-              {[
-                "Дети смотрят свои баллы на планшете и заходят в личный кабинет только через свой PIN.",
-                "Родитель дома быстро вносит плюс, минус и проверяет недельные обязанности прямо с планшета.",
-                "Посудомойка уже учитывает недельного дежурного и после проверки переключает очередь дальше.",
-                "Фотоотчеты и удаленная модерация останутся следующим большим шагом поверх этой версии.",
-              ].map((text) => (
-                <div key={text} className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <div className="flex items-start gap-3">
-                    <Sparkles className="mt-0.5 h-4 w-4 text-amber-500" />
-                    <p className="text-sm leading-6 text-slate-600">{text}</p>
-                  </div>
+            <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-4">
+              <div className="flex items-start gap-3">
+                <Sparkles className="mt-0.5 h-4 w-4 text-amber-500" />
+                <div>
+                  <p className="font-semibold text-slate-900">Следующий слой продукта</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    Фотоотчеты и удаленная модерация будут строиться поверх этой домашней версии, не ломая планшетный сценарий.
+                  </p>
                 </div>
-              ))}
+              </div>
             </div>
           </SectionCard>
         </div>

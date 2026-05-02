@@ -1,11 +1,12 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { verifyPin } from "@/lib/pin-hash";
 
 export const authCookieNames = {
   parent: "deti-parent-session",
   child: "deti-child-session",
 } as const;
 
-export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
 type SessionKind = "parent" | "child";
 
@@ -107,8 +108,8 @@ function createSessionPayload(kind: SessionKind, slug?: string): SessionPayload 
   };
 }
 
-export function getParentPin() {
-  return getRequiredEnv("PARENT_PIN");
+export function getParentPinCredential() {
+  return process.env.PARENT_PIN_HASH?.trim() || getRequiredEnv("PARENT_PIN");
 }
 
 export function getChildPin(slug: string) {
@@ -125,8 +126,8 @@ export function isValidChildSessionValue(rawValue: string | undefined, slug: str
   return payload?.kind === "child" && payload.slug === slug;
 }
 
-export function validatePin(inputPin: string, expectedPin: string) {
-  return safeEqualText(inputPin, expectedPin);
+export async function validatePin(inputPin: string, storedCredential: string) {
+  return verifyPin(inputPin, storedCredential);
 }
 
 export function createParentSessionValue() {

@@ -9,7 +9,6 @@ import {
   getCurrentRoomCycleKey,
   getNextDishwasherSlug,
   householdSettingKeys,
-  setHouseholdSetting,
   weeklyRules,
 } from "@/lib/household";
 import { deleteSubmissionPhoto, saveSubmissionPhoto } from "@/lib/submission-photos";
@@ -186,7 +185,7 @@ export async function createManualTransactionAction(
   }
 
   await prisma.transaction.create({
-    data: {
+      data: {
       childId: child.id,
       title: points > 0 ? "Ручное начисление" : "Ручной штраф",
       note: note || null,
@@ -295,8 +294,9 @@ export async function reviewRoomAction(childId: string, outcome: "reward" | "pen
     redirect("/parent");
   }
 
-  await prisma.transaction.create({
-    data: {
+  await prisma.$transaction(async (tx) => {
+    await tx.transaction.create({
+      data: {
       childId: child.id,
       title: weeklyRules.room.title,
       note:
@@ -306,9 +306,14 @@ export async function reviewRoomAction(childId: string, outcome: "reward" | "pen
       points: outcome === "reward" ? weeklyRules.room.rewardPoints : weeklyRules.room.penaltyPoints,
       type: outcome === "reward" ? "MANUAL_BONUS" : "MANUAL_PENALTY",
     },
-  });
+    });
 
-  await setHouseholdSetting(roomSettingKey, cycleKey);
+    await tx.setting.upsert({
+      where: { key: roomSettingKey },
+      update: { value: cycleKey },
+      create: { key: roomSettingKey, value: cycleKey },
+    });
+  });
 
   refreshScreens();
   redirect("/parent");
@@ -341,7 +346,8 @@ export async function reviewDishwasherAction(outcome: "reward" | "penalty") {
     redirect("/parent");
   }
 
-  await prisma.transaction.create({
+  await prisma.$transaction(async (tx) => {
+    await tx.transaction.create({
     data: {
       childId: child.id,
       title: weeklyRules.dishwasher.title,
@@ -355,15 +361,28 @@ export async function reviewDishwasherAction(outcome: "reward" | "penalty") {
           : weeklyRules.dishwasher.penaltyPoints,
       type: outcome === "reward" ? "MANUAL_BONUS" : "MANUAL_PENALTY",
     },
-  });
+    });
 
-  await Promise.all([
-    setHouseholdSetting(householdSettingKeys.dishwasherLastReviewedCycle, cycleKey),
-    setHouseholdSetting(
-      householdSettingKeys.dishwasherCurrentSlug,
-      getNextDishwasherSlug(child.slug),
-    ),
-  ]);
+    await tx.setting.upsert({
+      where: { key: householdSettingKeys.dishwasherLastReviewedCycle },
+      update: { value: cycleKey },
+      create: {
+        key: householdSettingKeys.dishwasherLastReviewedCycle,
+        value: cycleKey,
+      },
+    });
+
+    const nextDishwasherSlug = getNextDishwasherSlug(child.slug);
+
+    await tx.setting.upsert({
+      where: { key: householdSettingKeys.dishwasherCurrentSlug },
+      update: { value: nextDishwasherSlug },
+      create: {
+        key: householdSettingKeys.dishwasherCurrentSlug,
+        value: nextDishwasherSlug,
+      },
+    });
+  });
 
   refreshScreens();
   redirect("/parent");

@@ -6,7 +6,7 @@ import {
   clearParentSession,
   createChildSession,
   createParentSession,
-  getParentPin,
+  getParentPinCredential,
   hasChildSession,
   validatePin,
 } from "@/lib/auth";
@@ -47,7 +47,7 @@ export async function unlockParentAction(
     return { error: getRateLimitError(rateLimit.retryAfterSeconds) };
   }
 
-  if (!validatePin(pin, getParentPin())) {
+  if (!(await validatePin(pin, getParentPinCredential()))) {
     await registerFailedAttempt(scope);
     return { error: "Неверный PIN родителя." };
   }

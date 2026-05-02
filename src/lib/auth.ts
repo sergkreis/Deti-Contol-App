@@ -4,7 +4,7 @@ import {
   authCookieNames,
   createChildSessionValue,
   createParentSessionValue,
-  getParentPin,
+  getParentPinCredential,
   isValidChildSessionValue,
   isValidParentSessionValue,
   SESSION_MAX_AGE_SECONDS,
@@ -61,4 +61,4 @@ export async function requireChildSession(slug: string) {
   }
 }
 
-export { getParentPin, validatePin };
+export { getParentPinCredential, validatePin };

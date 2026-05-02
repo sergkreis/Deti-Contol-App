@@ -79,3 +79,14 @@ model Setting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+model AuthRateLimit {
+  key            String    @id
+  failures       Int       @default(0)
+  firstFailureAt DateTime
+  blockedUntil   DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  @@index([blockedUntil])
+  @@index([updatedAt])
+}

@@ -6,7 +6,6 @@ import {
   ClipboardList,
   LockKeyhole,
   Shield,
-  Sparkles,
   Users,
 } from "lucide-react";
 import { applyQuickCollectiveRuleAction } from "@/app/actions/transactions";
@@ -14,7 +13,7 @@ import { Badge } from "@/components/badge";
 import { Header } from "@/components/header";
 import { SectionCard } from "@/components/section-card";
 import { Shell } from "@/components/shell";
-import { formatDate, formatPoints } from "@/lib/format";
+import { formatBalance, formatDate, formatPoints } from "@/lib/format";
 import { getDashboardData } from "@/lib/data";
 
 const actionButtonClass =
@@ -74,7 +73,7 @@ export default async function Home() {
                   <p className="mt-6 text-2xl font-semibold text-slate-950">{child.name}</p>
                   <p className="mt-2 text-sm text-slate-500">Текущий счет</p>
                   <p className="mt-3 text-5xl font-semibold tracking-tight text-slate-950">
-                    {formatPoints(child.balance)}
+                    {formatBalance(child.balance)}
                   </p>
 
                   <div className="mt-5 space-y-2">
@@ -295,18 +294,6 @@ export default async function Home() {
                   <p className="mt-3 text-xs text-slate-400">{formatDate(transaction.createdAt)}</p>
                 </div>
               ))}
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-4">
-              <div className="flex items-start gap-3">
-                <Sparkles className="mt-0.5 h-4 w-4 text-amber-500" />
-                <div>
-                  <p className="font-semibold text-slate-900">Следующий слой продукта</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
-                    Фотоотчеты и удаленная модерация будут строиться поверх этой домашней версии, не ломая планшетный сценарий.
-                  </p>
-                </div>
-              </div>
             </div>
           </SectionCard>
         </div>

@@ -13,7 +13,7 @@ import { SectionCard } from "@/components/section-card";
 import { Shell } from "@/components/shell";
 import { getChildPageData } from "@/lib/data";
 import { requireChildSession } from "@/lib/auth";
-import { formatDate, formatPoints } from "@/lib/format";
+import { formatBalance, formatDate, formatPoints } from "@/lib/format";
 
 type PageProps = {
   params: Promise<{
@@ -51,10 +51,9 @@ export default async function ChildPage({ params }: PageProps) {
               style={{ background: `linear-gradient(135deg, ${child.color}, #ffffff)` }}
             >
               <p className="text-sm uppercase tracking-[0.2em] text-slate-700">Текущий счет</p>
-              <p className="mt-3 text-5xl font-semibold">{formatPoints(child.balance)}</p>
+              <p className="mt-3 text-5xl font-semibold">{formatBalance(child.balance)}</p>
               <p className="mt-3 text-sm text-slate-700">
-                Следующий шаг в развитии кабинета — фотоотчет с телефона и отправка на
-                проверку.
+                Здесь видны баллы после решений родителя и ручных начислений.
               </p>
             </div>
             <Link

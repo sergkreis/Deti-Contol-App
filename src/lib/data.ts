@@ -108,7 +108,13 @@ export async function getDashboardData() {
 export async function getChildPageData(slug: string) {
   const child = await prisma.child.findUnique({
     where: { slug },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      color: true,
+      isActive: true,
+      createdAt: true,
       transactions: {
         orderBy: { createdAt: "desc" },
         take: 8,
@@ -127,15 +133,21 @@ export async function getChildPageData(slug: string) {
     return null;
   }
 
-  const tasks = await prisma.task.findMany({
-    where: { isActive: true },
-    orderBy: [{ category: "asc" }, { title: "asc" }],
-  });
+  const [tasks, balance] = await Promise.all([
+    prisma.task.findMany({
+      where: { isActive: true },
+      orderBy: [{ category: "asc" }, { title: "asc" }],
+    }),
+    prisma.transaction.aggregate({
+      where: { childId: child.id },
+      _sum: { points: true },
+    }),
+  ]);
 
   return {
     child: {
       ...child,
-      balance: buildBalance(child.transactions),
+      balance: balance._sum.points ?? 0,
     },
     tasks,
   };

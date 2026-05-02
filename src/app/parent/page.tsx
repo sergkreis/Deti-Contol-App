@@ -15,7 +15,7 @@ import { SectionCard } from "@/components/section-card";
 import { Shell } from "@/components/shell";
 import { TransactionForm } from "@/components/transaction-form";
 import { requireParentSession } from "@/lib/auth";
-import { formatDate, formatPoints } from "@/lib/format";
+import { formatBalance, formatDate, formatPoints } from "@/lib/format";
 import { getParentPageData } from "@/lib/data";
 
 const actionButtonClass =
@@ -348,7 +348,7 @@ export default async function ParentPage() {
                       <p className="text-sm text-slate-500">Текущий счет</p>
                     </div>
                     <p className="text-2xl font-semibold tracking-tight text-slate-950">
-                      {formatPoints(child.balance)}
+                      {formatBalance(child.balance)}
                     </p>
                   </div>
                 </div>

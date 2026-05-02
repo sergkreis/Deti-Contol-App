@@ -17,6 +17,10 @@ export function formatPoints(points: number) {
   return moneyFormatter.format(points);
 }
 
+export function formatBalance(points: number) {
+  return moneyFormatter.format(points);
+}
+
 export function formatDate(date: Date) {
   return dateFormatter.format(date);
 }

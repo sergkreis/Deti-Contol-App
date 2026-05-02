@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useActionState } from "react";
+import { startTransition, useEffect, useId, useRef, useState, useActionState } from "react";
 import { Camera, CheckCircle2, ImagePlus, LoaderCircle, Plus } from "lucide-react";
 import type { TransactionActionState } from "@/app/actions/transactions";
 
@@ -43,7 +43,11 @@ async function resizeImage(file: File) {
       image.onload = () => resolve();
       image.onerror = () => reject(new Error("Cannot read selected image."));
       image.src = imageUrl;
-    });
+    }).catch(() => null);
+
+    if (!image.naturalWidth || !image.naturalHeight) {
+      return file;
+    }
 
     const scale = Math.min(1, maxImageSide / Math.max(image.width, image.height));
 
@@ -90,12 +94,6 @@ async function resizeImage(file: File) {
   }
 }
 
-function replaceInputFile(input: HTMLInputElement, file: File) {
-  const transfer = new DataTransfer();
-  transfer.items.add(file);
-  input.files = transfer.files;
-}
-
 export function PhotoSubmissionForm({ action }: PhotoSubmissionFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const inputId = useId();
@@ -137,7 +135,6 @@ export function PhotoSubmissionForm({ action }: PhotoSubmissionFormProps) {
         return;
       }
 
-      replaceInputFile(event.currentTarget, preparedFile);
       setSelectedFile(preparedFile);
       setPreviewUrl(URL.createObjectURL(preparedFile));
     } catch {
@@ -149,9 +146,19 @@ export function PhotoSubmissionForm({ action }: PhotoSubmissionFormProps) {
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    if (clientError || isPreparingPhoto || !inputRef.current?.files?.[0]) {
+    if (clientError || isPreparingPhoto || !selectedFile) {
       event.preventDefault();
+      return;
     }
+
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    formData.set("photo", selectedFile);
+
+    startTransition(() => {
+      formAction(formData);
+    });
   }
 
   const disabled = pending || isPreparingPhoto || Boolean(clientError);

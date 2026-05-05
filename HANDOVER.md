@@ -1,6 +1,6 @@
 # Deti Control - Handover
 
-Последнее обновление: 2026-05-01
+Последнее обновление: 2026-05-02
 
 ## Быстрый контекст
 
@@ -17,7 +17,7 @@ C:\Users\Sergej\Documents\Codex\PROJECTS.md
 Локальный путь:
 
 ```text
-C:\Users\Sergej\Documents\Codex\Deti Control
+C:\Users\Sergej\Projects\apps\deti-control
 ```
 
 GitHub:
@@ -270,6 +270,7 @@ Keep server .env, prisma/dev.db, and uploads/ when replacing the app folder.
 Last app deploy commit: df90aaa.
 Last server checkout after docs-only handover pull: 426b27f.
 Last server backup after deploy: /home/codex/deti-control-backup-20260501-142317
+Latest verified VM checkout on 2026-05-02: 4825841.
 ```
 
 ## Текущее состояние
@@ -284,6 +285,59 @@ photo submission moderation flow is deployed on VM
 child PIN change flow is deployed on VM
 server checkout is main at 426b27f
 child PINs were reset on VM through server .env and SQLite Setting overrides
+```
+
+Проверка 2026-05-02:
+
+```text
+local git status was clean on main tracking origin/main
+VM app responded with HTTP 200 on http://192.168.1.250:3000/
+VM repo was clean on main tracking origin/main
+VM current commit: 4825841 Fix child balance calculation
+VM Node.js: v22.22.2
+VM npm: 10.9.7
+VM npm run lint succeeded
+pm2 process deti-control was online
+pm2 command: npm start -- --hostname 0.0.0.0 --port 3000
+pm2 showed 26 restarts, current uptime about 4h at review time
+uploads/submissions contained 1 file at review time
+local Windows Node.js was upgraded from v22.16.0 to v22.22.2 with winget
+Codex browser runtime worked after local Node.js upgrade
+```
+
+Review findings from 2026-05-02:
+
+```text
+P1: Dishwasher week label is wrong across month boundary.
+Live UI showed "27.04 - 02.06" on 2026-05-02, expected "27.04 - 03.05".
+Likely source: src/lib/household.ts getDishwasherCycleLabel creates sunday from current date, then sets day from monday.
+Fix direction: create sunday from monday, then add 6 days.
+
+P3: Auth rate-limit cleanup logs noisy Prisma delete errors.
+VM pm2 logs showed prisma.authRateLimit.delete() "No record was found for a delete".
+Likely source: src/lib/auth-rate-limit.ts line 76.
+Fix direction: use deleteMany({ where: { key } }) instead of delete(...).catch(...).
+```
+
+VM log notes from 2026-05-02:
+
+```text
+pm2 error log contained older/recent "Could not find a production build in the .next directory" startup failures.
+pm2 error log contained "Body exceeded 1 MB limit" for Server Actions upload.
+next.config.ts currently sets experimental.serverActions.bodySizeLimit to "10mb".
+Next.js 16.2.4 docs under node_modules/next/dist/docs confirm serverActions.bodySizeLimit format.
+Runtime-check real photo upload from a child phone is still recommended.
+```
+
+Design review notes from 2026-05-02:
+
+```text
+Live root page text renders correctly in Russian.
+Main dashboard is usable but text-heavy for a family tablet.
+Recommended UX direction: make first screen more compact and action-oriented:
+balances, pending queue, today action, dishwasher owner, then details below.
+In-app visual screenshot review was initially blocked by local Node v22.16.0,
+then local Node was upgraded to v22.22.2 and browser runtime became available.
 ```
 
 ## Открытые задачи
@@ -303,10 +357,13 @@ Done on 2026-05-01 in commit da8d909 and deployed to VM.
 Рекомендованные шаги:
 
 ```text
-1. Runtime-check photo upload from a real child phone on the home network.
-2. Runtime-check parent approve/reject from the parent device.
-3. Добавить manual bonus / penalty actions из parent UI, если текущей формы недостаточно.
-4. Опционально добавить nginx reverse proxy и локальный домен.
+1. Fix dishwasher week label month-boundary bug in src/lib/household.ts.
+2. Replace noisy authRateLimit.delete cleanup with deleteMany in src/lib/auth-rate-limit.ts.
+3. Runtime-check photo upload from a real child phone on the home network.
+4. Runtime-check parent approve/reject from the parent device.
+5. Re-check whether Server Action 1 MB upload errors still reproduce after the current 10mb config/build.
+6. Consider simplifying first-screen dashboard copy and hierarchy for tablet use.
+7. Опционально добавить nginx reverse proxy и локальный домен.
 ```
 
 ## Запрещено

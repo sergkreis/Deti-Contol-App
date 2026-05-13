@@ -8,8 +8,26 @@ import {
 } from "@/lib/household";
 import { prisma } from "@/lib/prisma";
 
-function buildBalance(points: Array<{ points: number }>) {
-  return points.reduce((sum, item) => sum + item.points, 0);
+async function getBalancesByChildId(childIds: string[]) {
+  if (childIds.length === 0) {
+    return new Map<string, number>();
+  }
+
+  const balances = await prisma.transaction.groupBy({
+    by: ["childId"],
+    where: {
+      childId: {
+        in: childIds,
+      },
+    },
+    _sum: {
+      points: true,
+    },
+  });
+
+  return new Map(
+    balances.map((balance) => [balance.childId, balance._sum.points ?? 0]),
+  );
 }
 
 export async function getDashboardData() {
@@ -18,9 +36,6 @@ export async function getDashboardData() {
       prisma.child.findMany({
         where: { isActive: true },
         include: {
-          transactions: {
-            orderBy: { createdAt: "desc" },
-          },
           submissions: {
             where: { status: SubmissionStatus.PENDING },
           },
@@ -44,6 +59,7 @@ export async function getDashboardData() {
   const currentDishwasherChild = children.find(
     (child) => child.slug === householdState.currentDishwasherSlug,
   );
+  const balanceByChildId = await getBalancesByChildId(children.map((child) => child.id));
 
   const responsibilityNotes = responsibilityTemplates.map((item) => {
     if (item.id === "dishwasher") {
@@ -68,9 +84,9 @@ export async function getDashboardData() {
       const roomReviewed =
         householdState.roomLastReviewedBySlug[child.slug] === householdState.currentRoomCycleKey;
       const statuses = [
-        roomReviewed ? "Комната: неделя закрыта" : "Комната: проверка в пятницу",
+        roomReviewed ? "Комната: закрыта" : "Комната: пятница",
         child.slug === householdState.currentDishwasherSlug
-          ? "Посудомойка: твоя неделя"
+          ? "Посудомойка: дежурный"
           : child.submissions.length > 0
             ? `Заявки: ${child.submissions.length}`
             : "Все спокойно",
@@ -81,7 +97,7 @@ export async function getDashboardData() {
         name: child.name,
         slug: child.slug,
         color: child.color,
-        balance: buildBalance(child.transactions),
+        balance: balanceByChildId.get(child.id) ?? 0,
         pendingCount: child.submissions.length,
         statuses,
       };
@@ -157,7 +173,6 @@ export async function getParentPageData() {
   const [children, pendingSubmissions, tasks, transactions, householdState] = await Promise.all([
     prisma.child.findMany({
       include: {
-        transactions: true,
         submissions: {
           where: { status: SubmissionStatus.PENDING },
         },
@@ -189,6 +204,7 @@ export async function getParentPageData() {
   const currentDishwasherChild = children.find(
     (child) => child.slug === householdState.currentDishwasherSlug,
   );
+  const balanceByChildId = await getBalancesByChildId(children.map((child) => child.id));
 
   const responsibilityNotes = responsibilityTemplates.map((item) => {
     if (item.id === "dishwasher") {
@@ -214,14 +230,14 @@ export async function getParentPageData() {
       name: child.name,
       slug: child.slug,
       color: child.color,
-      balance: buildBalance(child.transactions),
+      balance: balanceByChildId.get(child.id) ?? 0,
     })),
     children: children.map((child) => ({
       id: child.id,
       name: child.name,
       slug: child.slug,
       color: child.color,
-      balance: buildBalance(child.transactions),
+      balance: balanceByChildId.get(child.id) ?? 0,
       pendingCount: child.submissions.length,
       roomReviewed:
         householdState.roomLastReviewedBySlug[child.slug] === householdState.currentRoomCycleKey,
@@ -247,7 +263,7 @@ export async function getParentPageData() {
               name: currentDishwasherChild.name,
               slug: currentDishwasherChild.slug,
               color: currentDishwasherChild.color,
-              balance: buildBalance(currentDishwasherChild.transactions),
+              balance: balanceByChildId.get(currentDishwasherChild.id) ?? 0,
             }
           : null,
         alreadyReviewed:

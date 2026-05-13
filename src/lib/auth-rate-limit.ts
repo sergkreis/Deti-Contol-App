@@ -73,7 +73,7 @@ export async function getRateLimitStatus(scope: string) {
     state.blockedUntil ||
     state.firstFailureAt.getTime() + ATTEMPT_WINDOW_MS <= now.getTime()
   ) {
-    await prisma.authRateLimit.delete({ where: { key } }).catch(() => null);
+    await prisma.authRateLimit.deleteMany({ where: { key } });
     await pruneExpiredAttempts(now);
   }
 
@@ -129,5 +129,5 @@ export async function registerFailedAttempt(scope: string) {
 
 export async function clearFailedAttempts(scope: string) {
   const clientId = await getRequestClientId();
-  await prisma.authRateLimit.delete({ where: { key: getStoreKey(scope, clientId) } }).catch(() => null);
+  await prisma.authRateLimit.deleteMany({ where: { key: getStoreKey(scope, clientId) } });
 }

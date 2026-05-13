@@ -104,12 +104,11 @@ export function getDishwasherCycleLabel(date = new Date()) {
   const weekday = berlinDate.getDay();
   const diffToMonday = weekday === 0 ? -6 : 1 - weekday;
   const monday = new Date(berlinDate);
-  const sunday = new Date(berlinDate);
 
   monday.setHours(0, 0, 0, 0);
-  sunday.setHours(0, 0, 0, 0);
-
   monday.setDate(berlinDate.getDate() + diffToMonday);
+
+  const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
   return `${formatShortRuDate(monday)} - ${formatShortRuDate(sunday)}`;

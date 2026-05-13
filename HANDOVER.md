@@ -1,6 +1,6 @@
 # Deti Control - Handover
 
-Последнее обновление: 2026-05-02
+Последнее обновление: 2026-05-12
 
 ## Быстрый контекст
 
@@ -211,6 +211,38 @@ Prisma:
 npm run db:generate
 npm run db:push
 npm run db:seed
+```
+
+## Codex skills
+
+Для frontend/UI задач использовать skills из Build Web Apps plugin:
+
+```text
+C:\Users\Sergej\.codex\plugins\cache\openai-curated\build-web-apps\1141b764\skills\
+```
+
+Релевантные skills для этого проекта:
+
+```text
+frontend-app-builder - для редизайна, визуальной полировки dashboard/UI и крупных frontend surface changes.
+frontend-testing-debugging - для browser QA, UI regressions, responsive checks, console errors и interaction debugging.
+react-best-practices - для React/Next.js правок, performance review, server actions, data fetching и component structure.
+```
+
+Пока не применять без отдельной причины:
+
+```text
+shadcn-best-practices - проект сейчас использует собственные компоненты, не shadcn/ui.
+stripe-best-practices - Stripe в проекте нет.
+supabase-best-practices - проект сейчас Prisma + SQLite, не Supabase.
+```
+
+Важно:
+
+```text
+Для любых Next.js правок все равно соблюдать AGENTS.md:
+перед кодом читать релевантные docs из node_modules/next/dist/docs/,
+потому что проект на Next.js 16.2.4.
 ```
 
 ## Deploy workflow

@@ -42,15 +42,19 @@ export default async function Home() {
         variant="family"
         eyebrow="Deti Control"
         title="Семейная доска"
-        description="Домашний экран для планшета: сразу видно баланс, дежурства, очередь на проверку и самые частые действия."
+        description="Баланс, дежурства и очередь проверки на одном домашнем экране."
       />
 
       <main className="grid gap-6">
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.9fr]">
           <SectionCard
             title="Семья сегодня"
-            description="Главный обзор без лишнего шума: кто как идет, у кого есть заявки и что важно по неделе."
-            actions={<Badge tone="warning">{pendingCount} ждут проверки</Badge>}
+            description="Баланс каждого ребенка, заявки и ближайшие дежурства."
+            actions={
+              <Badge tone={pendingCount > 0 ? "warning" : "neutral"}>
+                {pendingCount > 0 ? `${pendingCount} ждут проверки` : "Нет заявок"}
+              </Badge>
+            }
           >
             <div className="grid gap-4 md:grid-cols-3">
               {children.map((child) => (
@@ -70,13 +74,13 @@ export default async function Home() {
                     </Badge>
                   </div>
 
-                  <p className="mt-6 text-2xl font-semibold text-slate-950">{child.name}</p>
+                  <p className="mt-5 text-2xl font-semibold text-slate-950">{child.name}</p>
                   <p className="mt-2 text-sm text-slate-500">Текущий счет</p>
-                  <p className="mt-3 text-5xl font-semibold tracking-tight text-slate-950">
+                  <p className="mt-2 text-5xl font-semibold tracking-tight text-slate-950">
                     {formatBalance(child.balance)}
                   </p>
 
-                  <div className="mt-5 space-y-2">
+                  <div className="mt-4 space-y-2">
                     {child.statuses.map((status) => (
                       <div key={status} className="rounded-2xl bg-white px-3 py-2 text-sm text-slate-600">
                         {status}
@@ -86,7 +90,7 @@ export default async function Home() {
 
                   <Link
                     href={`/child/${child.slug}/unlock`}
-                    className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-950"
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-950"
                   >
                     Личный вход
                     <ArrowRight className="h-4 w-4" />
@@ -101,7 +105,9 @@ export default async function Home() {
                   Очередь
                 </p>
                 <p className="mt-3 text-3xl font-semibold">{pendingCount}</p>
-                <p className="mt-2 text-sm text-white/70">Столько фото и задач ждут подтверждения.</p>
+                <p className="mt-2 text-sm text-white/70">
+                  {pendingCount > 0 ? "Нужно решение родителя." : "Можно не открывать панель."}
+                </p>
               </div>
 
               <div className="rounded-2xl bg-white px-4 py-4 ring-1 ring-slate-200">
@@ -130,7 +136,7 @@ export default async function Home() {
 
           <SectionCard
             title="Что важно сейчас"
-            description="Главная зона действий для планшета: сначала то, что нужно решить сегодня, затем недельный фокус."
+            description="Быстрое действие дня и недельный фокус."
           >
             <div className="grid gap-4">
               <div className="rounded-[26px] bg-amber-50 p-5">
